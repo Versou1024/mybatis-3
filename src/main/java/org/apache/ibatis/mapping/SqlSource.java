@@ -22,7 +22,11 @@ package org.apache.ibatis.mapping;
  * @author Clinton Begin
  */
 public interface SqlSource {
+  // 表示从 XML 文件或注释读取的映射语句的内容
+  // 根据从用户接收到的输入参数创建将传递给数据库的 SQL
 
+  // 参数对象
+  // 返回一个BoundSql
   BoundSql getBoundSql(Object parameterObject);
 
 }

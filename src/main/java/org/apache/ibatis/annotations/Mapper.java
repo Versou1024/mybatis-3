@@ -33,4 +33,5 @@ import java.lang.annotation.Target;
 @Target({ ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER })
 public @interface Mapper {
   // Interface Mapper
+  // 在接口类上添加了@Mapper，在编译之后会生成相应的接口实现类
 }

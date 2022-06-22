@@ -22,6 +22,10 @@ import java.lang.reflect.Method;
  * @author Clinton Begin
  */
 public class Invocation {
+  // 很简单
+  // 持有 target 拦截对象
+  // 持有 Method 拦截的方法
+  // 持有 args   拦截的参数
 
   private final Object target;
   private final Method method;

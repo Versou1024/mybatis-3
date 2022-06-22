@@ -21,19 +21,20 @@ package org.apache.ibatis.session;
  * @author Eduardo Macarron
  */
 public enum AutoMappingBehavior {
+  // 指定 MyBatis 是否以及如何自动将列映射到字段/属性。
 
   /**
    * Disables auto-mapping.
    */
-  NONE,
+  NONE, // 禁用自动映射。
 
   /**
    * Will only auto-map results with no nested result mappings defined inside.
    */
-  PARTIAL,
+  PARTIAL, // 只会自动映射结果，其中没有定义嵌套的结果映射。
 
   /**
    * Will auto-map result mappings of any complexity (containing nested or otherwise).
    */
-  FULL
+  FULL // 将自动映射任何复杂性的结果映射（包含嵌套或其他）。
 }

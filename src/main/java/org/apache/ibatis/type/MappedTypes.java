@@ -28,5 +28,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface MappedTypes {
+  // 用在TypeHandler上表示适配支持的javaType
   Class<?>[] value();
 }

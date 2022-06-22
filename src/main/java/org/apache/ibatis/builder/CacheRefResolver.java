@@ -30,6 +30,7 @@ public class CacheRefResolver {
   }
 
   public Cache resolveCacheRef() {
+    // 实质上就是调用助手 assistant 的 userCacheRef() 方法
     return assistant.useCacheRef(cacheRefNamespace);
   }
 }

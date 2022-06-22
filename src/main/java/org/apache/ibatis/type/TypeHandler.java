@@ -24,16 +24,18 @@ import java.sql.SQLException;
  * @author Clinton Begin
  */
 public interface TypeHandler<T> {
+  // MyBatis的核心之一: TypeHandler
 
+  // 存入 -- 向ps第i个位置如何写入T类型的参数
   void setParameter(PreparedStatement ps, int i, T parameter, JdbcType jdbcType) throws SQLException;
 
-  /**
-   * @param columnName Colunm name, when configuration <code>useColumnLabel</code> is <code>false</code>
-   */
+  // 结果集rs根据列名columnName获取对应的值,然后转换为T类型
   T getResult(ResultSet rs, String columnName) throws SQLException;
 
+  // 结果集rs根据索引位置columnIndex获取对应的值,然后转换为T类型
   T getResult(ResultSet rs, int columnIndex) throws SQLException;
 
+  // 存储过程使用较少
   T getResult(CallableStatement cs, int columnIndex) throws SQLException;
 
 }

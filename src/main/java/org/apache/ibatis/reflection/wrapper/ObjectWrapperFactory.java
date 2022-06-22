@@ -21,7 +21,9 @@ import org.apache.ibatis.reflection.MetaObject;
  * @author Clinton Begin
  */
 public interface ObjectWrapperFactory {
+  // 生成 ObjectWrapper 的工厂
 
+  // 是否可以为object创建ObjectWrapper
   boolean hasWrapperFor(Object object);
 
   ObjectWrapper getWrapperFor(MetaObject metaObject, Object object);

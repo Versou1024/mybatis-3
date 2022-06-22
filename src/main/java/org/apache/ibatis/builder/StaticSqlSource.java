@@ -15,19 +15,23 @@
  */
 package org.apache.ibatis.builder;
 
-import java.util.List;
-
 import org.apache.ibatis.mapping.BoundSql;
 import org.apache.ibatis.mapping.ParameterMapping;
 import org.apache.ibatis.mapping.SqlSource;
 import org.apache.ibatis.session.Configuration;
 
+import java.util.List;
+
 /**
  * @author Clinton Begin
  */
 public class StaticSqlSource implements SqlSource {
+  // 静态的SqlSource -- 不需要任何动态解析操作
 
+  // 直接有映射的sql的字符串值
   private final String sql;
+  // parameterMappings是sql需要的占位符的形参数据
+  // 即#{}中的表达式信息
   private final List<ParameterMapping> parameterMappings;
   private final Configuration configuration;
 
@@ -43,6 +47,7 @@ public class StaticSqlSource implements SqlSource {
 
   @Override
   public BoundSql getBoundSql(Object parameterObject) {
+    // 获取BoundSql
     return new BoundSql(configuration, sql, parameterMappings, parameterObject);
   }
 

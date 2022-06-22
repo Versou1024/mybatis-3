@@ -25,6 +25,7 @@ import org.slf4j.spi.LocationAwareLogger;
  * @author Eduardo Macarron
  */
 class Slf4jLocationAwareLoggerImpl implements Log {
+  // 适配器 -- 目标接口Log -- 将 Slf4j 的 LocationAwareLogger 适配为 log 即可
 
   private static final Marker MARKER = MarkerFactory.getMarker(LogFactory.MARKER);
 
@@ -45,6 +46,9 @@ class Slf4jLocationAwareLoggerImpl implements Log {
   public boolean isTraceEnabled() {
     return logger.isTraceEnabled();
   }
+
+  // 实际执行的方法 -- 是 logger.log
+
 
   @Override
   public void error(String s, Throwable e) {

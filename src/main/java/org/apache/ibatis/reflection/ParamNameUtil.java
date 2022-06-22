@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class ParamNameUtil {
+  // 形参名工具
+
   public static List<String> getParamNames(Method method) {
     return getParameterNames(method);
   }
@@ -33,6 +35,7 @@ public class ParamNameUtil {
   }
 
   private static List<String> getParameterNames(Executable executable) {
+    // 获取所有的形参的名字
     return Arrays.stream(executable.getParameters()).map(Parameter::getName).collect(Collectors.toList());
   }
 

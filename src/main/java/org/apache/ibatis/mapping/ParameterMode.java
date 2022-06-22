@@ -19,5 +19,7 @@ package org.apache.ibatis.mapping;
  * @author Clinton Begin
  */
 public enum ParameterMode {
+  // 存储过程的形参模式
+  // 入参/出参/出入参
   IN, OUT, INOUT
 }

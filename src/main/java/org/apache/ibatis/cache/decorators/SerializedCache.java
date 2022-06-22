@@ -15,23 +15,17 @@
  */
 package org.apache.ibatis.cache.decorators;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.ObjectStreamClass;
-import java.io.Serializable;
-
 import org.apache.ibatis.cache.Cache;
 import org.apache.ibatis.cache.CacheException;
 import org.apache.ibatis.io.Resources;
+
+import java.io.*;
 
 /**
  * @author Clinton Begin
  */
 public class SerializedCache implements Cache {
+  // 只读型的Cache -- 需要在@CacheNamespace或<cache>标签中通过readWrite属性来指定
 
   private final Cache delegate;
 
@@ -51,6 +45,7 @@ public class SerializedCache implements Cache {
 
   @Override
   public void putObject(Object key, Object object) {
+    // 将object序列化进去存储
     if (object == null || object instanceof Serializable) {
       delegate.putObject(key, serialize((Serializable) object));
     } else {
@@ -60,6 +55,7 @@ public class SerializedCache implements Cache {
 
   @Override
   public Object getObject(Object key) {
+    // 将object反序列出来读
     Object object = delegate.getObject(key);
     return object == null ? null : deserialize((byte[]) object);
   }

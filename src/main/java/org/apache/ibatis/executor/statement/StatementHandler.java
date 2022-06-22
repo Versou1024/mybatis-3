@@ -15,26 +15,41 @@
  */
 package org.apache.ibatis.executor.statement;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.List;
-
 import org.apache.ibatis.cursor.Cursor;
 import org.apache.ibatis.executor.parameter.ParameterHandler;
 import org.apache.ibatis.mapping.BoundSql;
 import org.apache.ibatis.session.ResultHandler;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.List;
+
 /**
  * @author Clinton Begin
  */
 public interface StatementHandler {
+  // StatementHandler 用来处理Statement
+  // 持有 update/query/queryCursor/batch
+  // 实现类
+  // RoutingStatementHandler
+  //    BaseStatementHandler
+  //      PreparedStatementHandler
+  //      CallableStatementHandler
+  //      SimpleStatementHandler
 
+  // 从Connection获取Statement
+  // 其中可以定制事务超时时间 transactionTimeout
   Statement prepare(Connection connection, Integer transactionTimeout)
       throws SQLException;
 
+  // 当Statement为PreparedStatement时,进行参数化--即占位符填充
+  // 利用的是ParameterHandler的处理能力
   void parameterize(Statement statement)
       throws SQLException;
+
+  // 开始执行statement
+  // 分别有批量的/更新/查询/
 
   void batch(Statement statement)
       throws SQLException;

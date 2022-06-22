@@ -32,13 +32,15 @@ import org.apache.ibatis.type.UnknownTypeHandler;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface TypeDiscriminator {
-  String column();
+  // 鉴定器
 
-  Class<?> javaType() default void.class;
+  String column(); // 使用哪一个列的值做鉴定
 
-  JdbcType jdbcType() default JdbcType.UNDEFINED;
+  Class<?> javaType() default void.class; // 对应的java类型
 
-  Class<? extends TypeHandler> typeHandler() default UnknownTypeHandler.class;
+  JdbcType jdbcType() default JdbcType.UNDEFINED; // 对应的jdbc类型
 
-  Case[] cases();
+  Class<? extends TypeHandler> typeHandler() default UnknownTypeHandler.class; // TypeHandler
+
+  Case[] cases(); // 列的值为以下哪种case生效哦
 }

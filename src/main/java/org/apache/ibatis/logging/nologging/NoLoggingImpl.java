@@ -21,6 +21,7 @@ import org.apache.ibatis.logging.Log;
  * @author Clinton Begin
  */
 public class NoLoggingImpl implements Log {
+  // 无日志操作
 
   public NoLoggingImpl(String clazz) {
     // Do Nothing

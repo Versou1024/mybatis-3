@@ -24,9 +24,13 @@ import java.util.List;
  */
 public class InterceptorChain {
 
+  // 管理 Interceptor
   private final List<Interceptor> interceptors = new ArrayList<>();
 
   public Object pluginAll(Object target) {
+    // target可以是 ParameterHandler/ResultSetHandler/StatementHandler/Executor 四个对象之一
+    // 因此 Interceptor可以对上面四个对象的执行进行干涉
+    // 遍历所有target,由Interceptor通过插件plugin()方法对target生成代理对象 -- 然后就可以target的执行进行拦截
     for (Interceptor interceptor : interceptors) {
       target = interceptor.plugin(target);
     }
@@ -34,6 +38,7 @@ public class InterceptorChain {
   }
 
   public void addInterceptor(Interceptor interceptor) {
+    // 添加拦截器Interceptor
     interceptors.add(interceptor);
   }
 

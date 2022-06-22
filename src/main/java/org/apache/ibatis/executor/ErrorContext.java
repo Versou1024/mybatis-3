@@ -19,12 +19,13 @@ package org.apache.ibatis.executor;
  * @author Clinton Begin
  */
 public class ErrorContext {
+  // 错误上下文
 
   private static final String LINE_SEPARATOR = System.getProperty("line.separator","\n");
   private static final ThreadLocal<ErrorContext> LOCAL = new ThreadLocal<>();
 
   private ErrorContext stored;
-  private String resource;
+  private String resource; // 资源;比如Mapper资源resource
   private String activity;
   private String object;
   private String message;
@@ -35,6 +36,9 @@ public class ErrorContext {
   }
 
   public static ErrorContext instance() {
+    // 静态构造方法 instance()
+
+    // 向当前线程的ThreadLocal中存入新创建的ErrorContext
     ErrorContext context = LOCAL.get();
     if (context == null) {
       context = new ErrorContext();
@@ -89,6 +93,7 @@ public class ErrorContext {
   }
 
   public ErrorContext reset() {
+    // 重置所有属性
     resource = null;
     activity = null;
     object = null;

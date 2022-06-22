@@ -22,15 +22,18 @@ import java.lang.reflect.Constructor;
  * @author Eduardo Macarron
  */
 public final class LogFactory {
+  // 日志工厂
 
   /**
    * Marker to be used by logging implementations that support markers.
    */
   public static final String MARKER = "MYBATIS";
+  // 标记 = "MYBATIS"
 
   private static Constructor<? extends Log> logConstructor;
 
   static {
+    // 关注: 静态方法
     tryImplementation(LogFactory::useSlf4jLogging);
     tryImplementation(LogFactory::useCommonsLogging);
     tryImplementation(LogFactory::useLog4J2Logging);
@@ -63,6 +66,9 @@ public final class LogFactory {
     setImplementation(org.apache.ibatis.logging.slf4j.Slf4jImpl.class);
   }
 
+  // 五个static且synchronized的方法
+  // 主要是调用 setImplementation() 方法 实例化五个Log日志器
+
   public static synchronized void useCommonsLogging() {
     setImplementation(org.apache.ibatis.logging.commons.JakartaCommonsLoggingImpl.class);
   }
@@ -88,6 +94,15 @@ public final class LogFactory {
   }
 
   private static void tryImplementation(Runnable runnable) {
+    //    tryImplementation(LogFactory::useSlf4jLogging);
+    //    tryImplementation(LogFactory::useCommonsLogging);
+    //    tryImplementation(LogFactory::useLog4J2Logging);
+    //    tryImplementation(LogFactory::useLog4JLogging);
+    //    tryImplementation(LogFactory::useJdkLogging);
+    //    tryImplementation(LogFactory::useNoLogging);
+    // LogFactory 的优先级就是 useSlf4jLogging -> useCommonsLogging -> useLog4J2Logging -> useLog4JLogging -> useJdkLogging -> useNoLogging
+    // 因为只要前面一个一旦加载成功,那么logConstructor就不会为空,那么后续的runnable.run()是无法运行的哦
+    // 说实话 -- 这个写法很傻逼
     if (logConstructor == null) {
       try {
         runnable.run();

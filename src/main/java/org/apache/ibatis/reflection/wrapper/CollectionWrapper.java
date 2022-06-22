@@ -15,21 +15,24 @@
  */
 package org.apache.ibatis.reflection.wrapper;
 
-import java.util.Collection;
-import java.util.List;
-
 import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.reflection.factory.ObjectFactory;
 import org.apache.ibatis.reflection.property.PropertyTokenizer;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Clinton Begin
  */
 public class CollectionWrapper implements ObjectWrapper {
+  // 用来中 collection 获取集合中的元素的访问器
+
 
   private final Collection<Object> object;
 
   public CollectionWrapper(MetaObject metaObject, Collection<Object> object) {
+    // 无须指定metaObejct
     this.object = object;
   }
 
@@ -37,6 +40,8 @@ public class CollectionWrapper implements ObjectWrapper {
   public Object get(PropertyTokenizer prop) {
     throw new UnsupportedOperationException();
   }
+
+  // 下面大部分方法都抛出异常哦
 
   @Override
   public void set(PropertyTokenizer prop, Object value) {
@@ -90,6 +95,7 @@ public class CollectionWrapper implements ObjectWrapper {
 
   @Override
   public void add(Object element) {
+    // 允许添加
     object.add(element);
   }
 

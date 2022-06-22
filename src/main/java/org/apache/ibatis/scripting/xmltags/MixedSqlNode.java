@@ -21,6 +21,11 @@ import java.util.List;
  * @author Clinton Begin
  */
 public class MixedSqlNode implements SqlNode {
+  // 可以认为是一个组合模式哦
+
+  // 混合的SqlNode
+  // 常见的比如 <trim> <where> <when> 等标签里面都允许都有别的标签 -- 因此是一个其内部的子标签会被作为MixedSqlNode存储
+
   private final List<SqlNode> contents;
 
   public MixedSqlNode(List<SqlNode> contents) {
@@ -29,6 +34,8 @@ public class MixedSqlNode implements SqlNode {
 
   @Override
   public boolean apply(DynamicContext context) {
+    // 如何将 MixedSqlNode 应用到 context 上
+    // 那就是遍历contents即可
     contents.forEach(node -> node.apply(context));
     return true;
   }

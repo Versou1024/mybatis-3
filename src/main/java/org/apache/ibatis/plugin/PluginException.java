@@ -21,6 +21,8 @@ import org.apache.ibatis.exceptions.PersistenceException;
  * @author Clinton Begin
  */
 public class PluginException extends PersistenceException {
+  // 插件异常
+  // 比如有Interceptor但没使用@Intercepts注解
 
   private static final long serialVersionUID = 8548771664564998595L;
 

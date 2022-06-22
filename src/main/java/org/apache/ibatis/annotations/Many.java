@@ -29,8 +29,11 @@ import org.apache.ibatis.mapping.FetchType;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({})
 public @interface Many {
+  // many对应的来源 -- select 可以指向其他mapper的语句
+
   String select() default "";
 
+  // 提取方式 : lazy/default/EAGER
   FetchType fetchType() default FetchType.DEFAULT;
 
 }

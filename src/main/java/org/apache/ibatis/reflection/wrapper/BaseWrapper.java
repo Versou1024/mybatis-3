@@ -15,12 +15,12 @@
  */
 package org.apache.ibatis.reflection.wrapper;
 
-import java.util.List;
-import java.util.Map;
-
 import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.reflection.ReflectionException;
 import org.apache.ibatis.reflection.property.PropertyTokenizer;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Clinton Begin
@@ -28,24 +28,34 @@ import org.apache.ibatis.reflection.property.PropertyTokenizer;
 public abstract class BaseWrapper implements ObjectWrapper {
 
   protected static final Object[] NO_ARGUMENTS = new Object[0];
+  // 用来存储基本对象metaObject
   protected final MetaObject metaObject;
+
+  // 提供一些protected的方法供子类使用功能哦
 
   protected BaseWrapper(MetaObject metaObject) {
     this.metaObject = metaObject;
   }
 
   protected Object resolveCollection(PropertyTokenizer prop, Object object) {
+    // 从Object中解析处集合 -- 例如 prop.getName()就是persons + prop.getIndexedName()就是person[1]
     if ("".equals(prop.getName())) {
       return object;
     } else {
+      // 从metaObjectGetValue("persons")获取对应的集合对象然后返回
+      // 上层会继续处理prop.getIndexedName()就是person[1]
       return metaObject.getValue(prop.getName());
     }
   }
 
   protected Object getCollectionValue(PropertyTokenizer prop, Object collection) {
+    // collection 集合类型
+
+    // 1. Map - prop.getIndex()将作为key
     if (collection instanceof Map) {
       return ((Map) collection).get(prop.getIndex());
     } else {
+      // 2. 其余集合类型 - prop.getIndex()将作为index
       int i = Integer.parseInt(prop.getIndex());
       if (collection instanceof List) {
         return ((List) collection).get(i);

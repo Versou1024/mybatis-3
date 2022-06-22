@@ -15,15 +15,15 @@
  */
 package org.apache.ibatis.session;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
-import java.util.Properties;
-
 import org.apache.ibatis.builder.xml.XMLConfigBuilder;
 import org.apache.ibatis.exceptions.ExceptionFactory;
 import org.apache.ibatis.executor.ErrorContext;
 import org.apache.ibatis.session.defaults.DefaultSqlSessionFactory;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.util.Properties;
 
 /**
  * Builds {@link SqlSession} instances.
@@ -31,6 +31,8 @@ import org.apache.ibatis.session.defaults.DefaultSqlSessionFactory;
  * @author Clinton Begin
  */
 public class SqlSessionFactoryBuilder {
+
+  // 构建SqlSession实例
 
   public SqlSessionFactory build(Reader reader) {
     return build(reader, null, null);
@@ -43,6 +45,26 @@ public class SqlSessionFactoryBuilder {
   public SqlSessionFactory build(Reader reader, Properties properties) {
     return build(reader, null, properties);
   }
+
+  // environment
+  // 在老版的mapper_config.xml中允许配置多个环境
+  // 如下 -- 因此可以启动指定的环境配置哦,比如连接dev的数据库\连接prd的数据库都可以配在mapper_config.xml,通过形参environment选择启用的环境
+  //     <!--
+  //        environments配置项目的运行环境, 可以配置多个
+  //        default: 启用的环境
+  //     -->
+  //    <environments default="development">
+  //        <environment id="development">
+  //            <transactionManager type="JDBC"/>
+  //            <dataSource type="POOLED">
+  //                <!-- 数据库连接信息 -->
+  //                <property name="driver" value="${driver}"/>
+  //                <property name="url" value="${url}"/>
+  //                <property name="username" value="${username}"/>
+  //                <property name="password" value="${password}"/>
+  //            </dataSource>
+  //        </environment>
+  //    </environments>
 
   public SqlSessionFactory build(Reader reader, String environment, Properties properties) {
     try {
@@ -74,7 +96,11 @@ public class SqlSessionFactoryBuilder {
 
   public SqlSessionFactory build(InputStream inputStream, String environment, Properties properties) {
     try {
+      // mapper核心配置文件需啊哟 xml 解析器解析
       XMLConfigBuilder parser = new XMLConfigBuilder(inputStream, environment, properties);
+      // 调用 parser.parse() 解析xml文件 -> 映射为 Configuration
+      // ❗️❗️❗️ 主要如何解析出Configuration,以及Configuration有什么东西
+      // 然后调用build()方法
       return build(parser.parse());
     } catch (Exception e) {
       throw ExceptionFactory.wrapException("Error building SqlSession.", e);

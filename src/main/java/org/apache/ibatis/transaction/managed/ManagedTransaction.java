@@ -15,14 +15,14 @@
  */
 package org.apache.ibatis.transaction.managed;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import javax.sql.DataSource;
-
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.session.TransactionIsolationLevel;
 import org.apache.ibatis.transaction.Transaction;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import javax.sql.DataSource;
 
 /**
  * {@link Transaction} that lets the container manage the full lifecycle of the transaction.
@@ -35,6 +35,10 @@ import org.apache.ibatis.transaction.Transaction;
  * @see ManagedTransactionFactory
  */
 public class ManagedTransaction implements Transaction {
+  // 让容器管理Transaction的整个生命周期的事务。
+  // 延迟连接检索，直到调用 getConnection()。
+  // 忽略所有提交或回滚请求。
+  // 默认情况下，它会关闭连接，但可以配置为不这样做
 
   private static final Log log = LogFactory.getLog(ManagedTransaction.class);
 
@@ -56,6 +60,7 @@ public class ManagedTransaction implements Transaction {
 
   @Override
   public Connection getConnection() throws SQLException {
+    // 和JDBCTransaction一样每个Transaction都只有一个连接Connection
     if (this.connection == null) {
       openConnection();
     }
@@ -65,11 +70,13 @@ public class ManagedTransaction implements Transaction {
   @Override
   public void commit() throws SQLException {
     // Does nothing
+    // 不支持主动commit()
   }
 
   @Override
   public void rollback() throws SQLException {
     // Does nothing
+    // 不支持主动rollback()
   }
 
   @Override

@@ -22,6 +22,8 @@ package org.apache.ibatis.builder;
  * @author Kazuki Shimizu
  */
 public interface InitializingObject {
+  // 指示提供初始化方法的接口。
+  // 该接口暂无实现类
 
   /**
    * Initialize a instance.

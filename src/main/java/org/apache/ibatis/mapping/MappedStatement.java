@@ -15,10 +15,6 @@
  */
 package org.apache.ibatis.mapping;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import org.apache.ibatis.cache.Cache;
 import org.apache.ibatis.executor.keygen.Jdbc3KeyGenerator;
 import org.apache.ibatis.executor.keygen.KeyGenerator;
@@ -28,34 +24,40 @@ import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.scripting.LanguageDriver;
 import org.apache.ibatis.session.Configuration;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * @author Clinton Begin
  */
 public final class MappedStatement {
+  // 对应 Select/Update/Insert/Delete/selectKey 标签的语句MappedStatement
+  // 也可以构建 selectKey标签 中的可执行SQL语句
 
-  private String resource;
-  private Configuration configuration;
-  private String id;
-  private Integer fetchSize;
-  private Integer timeout;
-  private StatementType statementType;
-  private ResultSetType resultSetType;
-  private SqlSource sqlSource;
-  private Cache cache;
-  private ParameterMap parameterMap;
-  private List<ResultMap> resultMaps;
-  private boolean flushCacheRequired;
-  private boolean useCache;
+  private String resource; // 对应的Resource
+  private Configuration configuration; // 唯一的配置中心
+  private String id; // 该statement的id
+  private Integer fetchSize; // select的结果集大小
+  private Integer timeout; // 超时时间
+  private StatementType statementType; // 使用的Statement类型 -- STATEMENT, PREPARED, CALLABLE
+  private ResultSetType resultSetType; // ResultSet的使用类型 -- 用于控制jdbc中ResultSet对象的取值行为
+  private SqlSource sqlSource; // ❗️❗️❗️
+  private Cache cache; // 当前MappedStatement使用的缓存 -- 比如刷新\获取值\数据库执行后回填值等操作都在这个Cache中完成篇
+  private ParameterMap parameterMap; // 忽略不计
+  private List<ResultMap> resultMaps; // mapper中对应的ResultMap引用的ResultMap的id/ResultType标签-内联的ResultMap的结果
+  private boolean flushCacheRequired; // 当前MappedStatement -- 是否刷新二级缓存和一级缓存
+  private boolean useCache; // 当前MappedStatement -- 是否使用二级缓存
   private boolean resultOrdered;
-  private SqlCommandType sqlCommandType;
-  private KeyGenerator keyGenerator;
-  private String[] keyProperties;
-  private String[] keyColumns;
+  private SqlCommandType sqlCommandType; // 当前statement的类型:  UNKNOWN, INSERT, UPDATE, DELETE, SELECT, FLUSH 之一
+  private KeyGenerator keyGenerator; // key 生成器 -- 可以搭配在 selectKey 标签使用 / 也可以是insert/update语句默认使用的Jdbc3KeyGenerator
+  private String[] keyProperties; // keyGenerator --
+  private String[] keyColumns;    // keyGenerator --
   private boolean hasNestedResultMaps;
-  private String databaseId;
-  private Log statementLog;
-  private LanguageDriver lang;
-  private String[] resultSets;
+  private String databaseId; // 数据库id
+  private Log statementLog; // 日志
+  private LanguageDriver lang; // 忽略
+  private String[] resultSets; // 多数据集结果,即返回多个ResultSet一般很少使用
 
   MappedStatement() {
     // constructor disabled
@@ -73,11 +75,16 @@ public final class MappedStatement {
       mappedStatement.parameterMap = new ParameterMap.Builder(configuration, "defaultParameterMap", null, new ArrayList<>()).build();
       mappedStatement.resultMaps = new ArrayList<>();
       mappedStatement.sqlCommandType = sqlCommandType;
+      // 1. mybatis.xml中useGeneratedKeys为false -- 因此会使用 NoKeyGenerator
+      // 否则开启全局的useGeneratedKeys并且当前的MappedStatement为Insert类型,就会创建Jdbc3KeyGenerator
+      // 2. 其次在当前builder.keyGenerator()中可以由mapper.xml中的insert/update标签中的指定的<selectKey>标签指定完成的
       mappedStatement.keyGenerator = configuration.isUseGeneratedKeys() && SqlCommandType.INSERT.equals(sqlCommandType) ? Jdbc3KeyGenerator.INSTANCE : NoKeyGenerator.INSTANCE;
       String logId = id;
+      // 全局的logPrefix默认是为null,除非在mybatis.xml中<setting>中配置logPrefix属性
       if (configuration.getLogPrefix() != null) {
         logId = configuration.getLogPrefix() + id;
       }
+      // 可简单关注 -- 源码不难
       mappedStatement.statementLog = LogFactory.getLog(logId);
       mappedStatement.lang = configuration.getDefaultScriptingLanguageInstance();
     }
@@ -294,13 +301,23 @@ public final class MappedStatement {
   }
 
   public BoundSql getBoundSql(Object parameterObject) {
+    // ❗️❗️❗️ 是无法直接存储BoundSql的,需要每次动态解析的哦
+
+    // 获取BoundSql -- 注意BoundSql已经提前处理好啦 --
+    // 位置: SqlSource sqlSource = langDriver.createSqlSource(configuration, context, parameterTypeClass);
+    // 在解析Mapper.xml的时候,就已经解析后并存入MappedStatement中去啦
     BoundSql boundSql = sqlSource.getBoundSql(parameterObject);
+    // 从boundSql获取ParameterMappings -- 即sql中的占位符信息
     List<ParameterMapping> parameterMappings = boundSql.getParameterMappings();
+    // 很少的情况会是空的 -- 一般都不会进去这里
     if (parameterMappings == null || parameterMappings.isEmpty()) {
       boundSql = new BoundSql(configuration, boundSql.getSql(), parameterMap.getParameterMappings(), parameterObject);
     }
 
     // check for nested result maps in parameter mappings (issue #30)
+    // 检查参数映射中的嵌套结果映射（问题 30）
+    // rmId 需要 #{person,resultMap="xx"}
+    // 说实话一般都不会有这种sb情况 -- 我都不知道干啥用的,who know tell me
     for (ParameterMapping pm : boundSql.getParameterMappings()) {
       String rmId = pm.getResultMapId();
       if (rmId != null) {

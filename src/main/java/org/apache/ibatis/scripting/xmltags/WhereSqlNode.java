@@ -15,19 +15,24 @@
  */
 package org.apache.ibatis.scripting.xmltags;
 
+import org.apache.ibatis.session.Configuration;
+
 import java.util.Arrays;
 import java.util.List;
-
-import org.apache.ibatis.session.Configuration;
 
 /**
  * @author Clinton Begin
  */
 public class WhereSqlNode extends TrimSqlNode {
+  // 对应<where>标签的处理
+  // 注意哦 -- WhereSqlNode是继承的TrimSqlNode
 
   private static List<String> prefixList = Arrays.asList("AND ","OR ","AND\n", "OR\n", "AND\r", "OR\r", "AND\t", "OR\t");
 
   public WhereSqlNode(Configuration configuration, SqlNode contents) {
+    // 前缀是Where
+    // 前缀覆盖的删除时 AND/OR/+换行符
+    // 无后缀/无后缀覆盖删除符号
     super(configuration, contents, "WHERE", prefixList, null, null);
   }
 

@@ -15,16 +15,13 @@
  */
 package org.apache.ibatis.parsing;
 
+import org.w3c.dom.CharacterData;
+import org.w3c.dom.*;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-
-import org.w3c.dom.CharacterData;
-import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 /**
  * @author Clinton Begin
@@ -74,12 +71,15 @@ public class XNode {
   }
 
   public String getValueBasedIdentifier() {
+    // 获取XNode的默认id
     StringBuilder builder = new StringBuilder();
     XNode current = this;
     while (current != null) {
       if (current != this) {
         builder.insert(0, "_");
       }
+      // 依次获取: id-value-property
+      // 如果都没有以上三个属性之一,那么builder.toString一般都是""
       String value = current.getStringAttribute("id",
           current.getStringAttribute("value",
               current.getStringAttribute("property", null)));

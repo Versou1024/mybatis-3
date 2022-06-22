@@ -41,10 +41,13 @@ public class StatementUtil {
    * @throws SQLException if a database access error occurs, this method is called on a closed <code>Statement</code>
    */
   public static void applyTransactionTimeout(Statement statement, Integer queryTimeout, Integer transactionTimeout) throws SQLException {
+
+    // 1. 如果事务超时时间为null,就不需要设置
     if (transactionTimeout == null){
       return;
     }
     Integer timeToLiveOfQuery = null;
+    // 2. queryTimeout 查询时间为空或者大于transactionTimeout
     if (queryTimeout == null || queryTimeout == 0) {
       timeToLiveOfQuery = transactionTimeout;
     } else if (transactionTimeout < queryTimeout) {

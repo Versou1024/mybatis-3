@@ -15,24 +15,25 @@
  */
 package org.apache.ibatis.reflection;
 
+import org.apache.ibatis.reflection.factory.ObjectFactory;
+import org.apache.ibatis.reflection.property.PropertyTokenizer;
+import org.apache.ibatis.reflection.wrapper.*;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import org.apache.ibatis.reflection.factory.ObjectFactory;
-import org.apache.ibatis.reflection.property.PropertyTokenizer;
-import org.apache.ibatis.reflection.wrapper.BeanWrapper;
-import org.apache.ibatis.reflection.wrapper.CollectionWrapper;
-import org.apache.ibatis.reflection.wrapper.MapWrapper;
-import org.apache.ibatis.reflection.wrapper.ObjectWrapper;
-import org.apache.ibatis.reflection.wrapper.ObjectWrapperFactory;
 
 /**
  * @author Clinton Begin
  */
 public class MetaObject {
 
+  // 辅助类 -- 用来个对象创建
+
+  // 原始包装的对象
   private final Object originalObject;
+
+  // 包括 四大组件 objectWrapper/objectFactoryobject/WrapperFactory/reflectorFactory
   private final ObjectWrapper objectWrapper;
   private final ObjectFactory objectFactory;
   private final ObjectWrapperFactory objectWrapperFactory;
@@ -44,15 +45,24 @@ public class MetaObject {
     this.objectWrapperFactory = objectWrapperFactory;
     this.reflectorFactory = reflectorFactory;
 
+    // 1. ObjectWrapper
     if (object instanceof ObjectWrapper) {
       this.objectWrapper = (ObjectWrapper) object;
-    } else if (objectWrapperFactory.hasWrapperFor(object)) {
+    }
+    // 2. objectWrapperFactory 可以为其包装
+    else if (objectWrapperFactory.hasWrapperFor(object)) {
       this.objectWrapper = objectWrapperFactory.getWrapperFor(this, object);
-    } else if (object instanceof Map) {
+    }
+    // 99%的情况到这里 -- 比如MapperMethod的形参args聚合后的Map<String,Object>结构
+    else if (object instanceof Map) {
       this.objectWrapper = new MapWrapper(this, (Map) object);
-    } else if (object instanceof Collection) {
+    }
+    // 无法至二级构造出阿里
+    else if (object instanceof Collection) {
       this.objectWrapper = new CollectionWrapper(this, (Collection) object);
-    } else {
+    }
+    // 1%的情况,单元素且无@Param标签,且非list/array
+    else {
       this.objectWrapper = new BeanWrapper(this, object);
     }
   }
@@ -64,6 +74,8 @@ public class MetaObject {
       return new MetaObject(object, objectFactory, objectWrapperFactory, reflectorFactory);
     }
   }
+
+  // 四大组件的Get方法
 
   public ObjectFactory getObjectFactory() {
     return objectFactory;
@@ -84,6 +96,8 @@ public class MetaObject {
   public String findProperty(String propName, boolean useCamelCaseMapping) {
     return objectWrapper.findProperty(propName, useCamelCaseMapping);
   }
+
+  // 核心获取访问器的任务 -- 委托给 objectWrapper 来获取
 
   public String[] getGetterNames() {
     return objectWrapper.getGetterNames();
@@ -109,19 +123,30 @@ public class MetaObject {
     return objectWrapper.hasGetter(name);
   }
 
+
+  // 核心:获取指定name的值
+
   public Object getValue(String name) {
+    // 比如 persons[1].hobbies 那么 prop.getName()就是persons + prop.getIndexedName()就是person[1]
+    // 第二次进来时: name就是persons[1]
     PropertyTokenizer prop = new PropertyTokenizer(name);
+    // 1. 是否有子属性,以上面为例是有的
     if (prop.hasNext()) {
+      // 2. 获取 persons[1] 对象的MetaObject
       MetaObject metaValue = metaObjectForProperty(prop.getIndexedName());
       if (metaValue == SystemMetaObject.NULL_META_OBJECT) {
         return null;
       } else {
+        // 2.1 继续递归查找子类型哦
         return metaValue.getValue(prop.getChildren());
       }
     } else {
+      // 3. 没有子属性
       return objectWrapper.get(prop);
     }
   }
+
+  //  核心:设置指定name的值
 
   public void setValue(String name, Object value) {
     PropertyTokenizer prop = new PropertyTokenizer(name);
@@ -142,6 +167,9 @@ public class MetaObject {
   }
 
   public MetaObject metaObjectForProperty(String name) {
+    // 比如 persons[1].hobbies 那么 prop.getName()就是persons + prop.getIndexedName()就是person[1]
+    // 这里传递过来的就是 person[1] 旨在从当前MetaObject找出父对象 person[1] 然后为其构建对象 MetaObject返回
+    // 继续递归getvalue()属性 -- 传递的name就是persons[1]
     Object value = getValue(name);
     return MetaObject.forObject(value, objectFactory, objectWrapperFactory, reflectorFactory);
   }

@@ -15,36 +15,41 @@
  */
 package org.apache.ibatis.mapping;
 
+import org.apache.ibatis.builder.InitializingObject;
+import org.apache.ibatis.cache.Cache;
+import org.apache.ibatis.cache.CacheException;
+import org.apache.ibatis.cache.decorators.*;
+import org.apache.ibatis.cache.impl.PerpetualCache;
+import org.apache.ibatis.reflection.MetaObject;
+import org.apache.ibatis.reflection.SystemMetaObject;
+
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.ibatis.builder.InitializingObject;
-import org.apache.ibatis.cache.Cache;
-import org.apache.ibatis.cache.CacheException;
-import org.apache.ibatis.cache.decorators.BlockingCache;
-import org.apache.ibatis.cache.decorators.LoggingCache;
-import org.apache.ibatis.cache.decorators.LruCache;
-import org.apache.ibatis.cache.decorators.ScheduledCache;
-import org.apache.ibatis.cache.decorators.SerializedCache;
-import org.apache.ibatis.cache.decorators.SynchronizedCache;
-import org.apache.ibatis.cache.impl.PerpetualCache;
-import org.apache.ibatis.reflection.MetaObject;
-import org.apache.ibatis.reflection.SystemMetaObject;
-
 /**
  * @author Clinton Begin
  */
 public class CacheBuilder {
+  // 用来构建Cache的budiler
+
+  // id -- cache被创建的命名空间
   private final String id;
+  // cache 的实现类是设置
   private Class<? extends Cache> implementation;
+  // cache 需要被哪些装饰
   private final List<Class<? extends Cache>> decorators;
+  // cache 大小
   private Integer size;
+  // 刷新间隔
   private Long clearInterval;
+  // 是否允许读写
   private boolean readWrite;
+  // 属性文件
   private Properties properties;
+  // 是否阻塞
   private boolean blocking;
 
   public CacheBuilder(String id) {
@@ -90,10 +95,16 @@ public class CacheBuilder {
   }
 
   public Cache build() {
+    // 核心一: 构建方法
+
+    // 1. 设置默认的implementation
     setDefaultImplementations();
+    // 2. 反射构造器实例化
     Cache cache = newBaseCacheInstance(implementation, id);
+    // 3. 向cache中设置Properties
     setCacheProperties(cache);
     // issue #352, do not apply decorators to custom caches
+    // 4. 针对 PerpetualCache 可以使用各种decorators,进行包装哦
     if (PerpetualCache.class.equals(cache.getClass())) {
       for (Class<? extends Cache> decorator : decorators) {
         cache = newCacheDecoratorInstance(decorator, cache);
@@ -107,6 +118,7 @@ public class CacheBuilder {
   }
 
   private void setDefaultImplementations() {
+    // implementation/decorators 为null时,添加默认实现
     if (implementation == null) {
       implementation = PerpetualCache.class;
       if (decorators.isEmpty()) {
@@ -115,6 +127,7 @@ public class CacheBuilder {
     }
   }
 
+  // ❗️❗️❗️ 设置标准的cache装饰器上去
   private Cache setStandardDecorators(Cache cache) {
     try {
       MetaObject metaCache = SystemMetaObject.forObject(cache);
@@ -122,15 +135,20 @@ public class CacheBuilder {
         metaCache.setValue("size", size);
       }
       if (clearInterval != null) {
+        // 是否有定时的刷新机制 -- 有的话,使用 ScheduledCache
         cache = new ScheduledCache(cache);
         ((ScheduledCache) cache).setClearInterval(clearInterval);
       }
       if (readWrite) {
+        // 是否只读 -- 需要使用装饰器 SerializedCache
         cache = new SerializedCache(cache);
       }
+      // 必须使用的装饰器
+      // LoggingCache\SynchronizedCache
       cache = new LoggingCache(cache);
       cache = new SynchronizedCache(cache);
       if (blocking) {
+        // 是否阻塞 -- 阻塞需要使用装饰器 BlockingCache
         cache = new BlockingCache(cache);
       }
       return cache;
@@ -140,6 +158,8 @@ public class CacheBuilder {
   }
 
   private void setCacheProperties(Cache cache) {
+    // 1. 通过 SystemMetaObject 映射到 cache 的各个属性上去
+
     if (properties != null) {
       MetaObject metaCache = SystemMetaObject.forObject(cache);
       for (Map.Entry<Object, Object> entry : properties.entrySet()) {
@@ -176,6 +196,7 @@ public class CacheBuilder {
         }
       }
     }
+    // 可以通过 InitializingObject 引入初始话方法
     if (InitializingObject.class.isAssignableFrom(cache.getClass())) {
       try {
         ((InitializingObject) cache).initialize();
@@ -185,6 +206,8 @@ public class CacheBuilder {
       }
     }
   }
+
+  // 使用反射来创建实例化对象
 
   private Cache newBaseCacheInstance(Class<? extends Cache> cacheClass, String id) {
     Constructor<? extends Cache> cacheConstructor = getBaseCacheConstructor(cacheClass);

@@ -29,6 +29,10 @@ import javax.sql.DataSource;
  */
 public interface DatabaseIdProvider {
 
+  // 用于提供dataBaseId
+  // 会在 mybatis.xml 配置中的 DatabaseIDProvider标签的type属性中指定 DatabaseIdProvider 的实现类
+  // 根据DataSource返回databaseId
+
   default void setProperties(Properties p) {
     // NOP
   }

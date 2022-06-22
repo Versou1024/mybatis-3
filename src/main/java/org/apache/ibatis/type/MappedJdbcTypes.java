@@ -28,6 +28,11 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface MappedJdbcTypes {
+  // 用在TypeHandler上,表示需要映射的JdbcType
+
   JdbcType[] value();
+
+  // 特殊情况: 是否可以是jdbcType为null
+  // 因为没有JdbcType.null的这种说法
   boolean includeNullJdbcType() default false;
 }

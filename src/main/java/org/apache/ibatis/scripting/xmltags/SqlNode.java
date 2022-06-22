@@ -19,5 +19,10 @@ package org.apache.ibatis.scripting.xmltags;
  * @author Clinton Begin
  */
 public interface SqlNode {
+  // 用于在DML标签 -- 在DML标签解析过程中
+  // 将每一个子Xnode都解析为一段对应的SqlNode
+  // 解析完毕之后,统一的调用apply方法
+  // 连接成最终需要执行的方法哦
+
   boolean apply(DynamicContext context);
 }

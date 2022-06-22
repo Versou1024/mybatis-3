@@ -15,16 +15,17 @@
  */
 package org.apache.ibatis.executor.keygen;
 
-import java.sql.Statement;
-
 import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.mapping.MappedStatement;
+
+import java.sql.Statement;
 
 /**
  * @author Clinton Begin
  * @author Kazuki Shimizu
  */
 public class NoKeyGenerator implements KeyGenerator {
+  // 空行为 -- 不做任何处理
 
   /**
    * A shared instance.

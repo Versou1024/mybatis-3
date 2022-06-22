@@ -15,17 +15,19 @@
  */
 package org.apache.ibatis.mapping;
 
+import org.apache.ibatis.session.Configuration;
+
 import java.util.Collections;
 import java.util.Map;
-
-import org.apache.ibatis.session.Configuration;
 
 /**
  * @author Clinton Begin
  */
 public class Discriminator {
 
+  // <discriminator>基本的属性: column\javaType\jdbcType\typeHandler 构成的 ResultMapping
   private ResultMapping resultMapping;
+  // <discriminator>下的子标签<case>: value属性 -> ResultMap属性指向的ResultMap的id[已适配命名空间]
   private Map<String, String> discriminatorMap;
 
   Discriminator() {

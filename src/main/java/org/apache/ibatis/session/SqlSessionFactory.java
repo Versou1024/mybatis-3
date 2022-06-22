@@ -23,6 +23,9 @@ import java.sql.Connection;
  * @author Clinton Begin
  */
 public interface SqlSessionFactory {
+  // 创建SqlSession对象
+  // 其中 DefaultSqlSessionFactory 创建的就是 DefaultSqlSession
+  // 而 SqlSessionManager 是一个装饰器
 
   SqlSession openSession();
 

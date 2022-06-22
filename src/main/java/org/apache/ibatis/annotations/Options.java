@@ -31,17 +31,19 @@ import org.apache.ibatis.mapping.StatementType;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface Options {
+  // 搭配
+
   /**
    * The options for the {@link Options#flushCache()}.
    * The default is {@link FlushCachePolicy#DEFAULT}
    */
   enum FlushCachePolicy {
     /** <code>false</code> for select statement; <code>true</code> for insert/update/delete statement. */
-    DEFAULT,
+    DEFAULT, // 选择语句为false ； true插入/更新/删除语句为真。
     /** Flushes cache regardless of the statement type. */
-    TRUE,
+    TRUE, // 无论语句类型如何，都会刷新缓存
     /** Does not flush cache regardless of the statement type. */
-    FALSE
+    FALSE // 无论语句类型如何，都不会刷新缓存。
   }
 
   boolean useCache() default true;
@@ -50,17 +52,17 @@ public @interface Options {
 
   ResultSetType resultSetType() default ResultSetType.DEFAULT;
 
-  StatementType statementType() default StatementType.PREPARED;
+  StatementType statementType() default StatementType.PREPARED; // 语句类型
 
-  int fetchSize() default -1;
+  int fetchSize() default -1; // 抓取大小
 
-  int timeout() default -1;
+  int timeout() default -1; // 超时时间
 
-  boolean useGeneratedKeys() default false;
+  boolean useGeneratedKeys() default false; // 是否使用生成的key -- 搭配@Insert/@Update
 
-  String keyProperty() default "";
+  String keyProperty() default ""; // key 放在那个属性上
 
-  String keyColumn() default "";
+  String keyColumn() default ""; // key 从那个列上获取出来
 
-  String resultSets() default "";
+  String resultSets() default ""; // 结果集
 }

@@ -25,6 +25,7 @@ import org.apache.logging.log4j.MarkerManager;
  * @author Eduardo Macarron
  */
 public class Log4j2LoggerImpl implements Log {
+  // 适配器
 
   private static final Marker MARKER = MarkerManager.getMarker(LogFactory.MARKER);
 

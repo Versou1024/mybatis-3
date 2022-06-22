@@ -45,13 +45,13 @@ public class PooledDataSource implements DataSource {
   private final UnpooledDataSource dataSource;
 
   // OPTIONAL CONFIGURATION FIELDS
-  protected int poolMaximumActiveConnections = 10;
-  protected int poolMaximumIdleConnections = 5;
-  protected int poolMaximumCheckoutTime = 20000;
-  protected int poolTimeToWait = 20000;
-  protected int poolMaximumLocalBadConnectionTolerance = 3;
-  protected String poolPingQuery = "NO PING QUERY SET";
-  protected boolean poolPingEnabled;
+  protected int poolMaximumActiveConnections = 10; // 池最大活动连接数
+  protected int poolMaximumIdleConnections = 5; // 池最大空闲连接数
+  protected int poolMaximumCheckoutTime = 20000; // 池最大检查时间
+  protected int poolTimeToWait = 20000; // 池等待时间
+  protected int poolMaximumLocalBadConnectionTolerance = 3; // 池最大本地错误连接容限
+  protected String poolPingQuery = "NO PING QUERY SET"; // 池 Ping 查询
+  protected boolean poolPingEnabled; //池 Ping 已启用
   protected int poolPingConnectionsNotUsedFor;
 
   private int expectedConnectionTypeCode;
@@ -151,7 +151,7 @@ public class PooledDataSource implements DataSource {
 
   /**
    * Sets the default network timeout value to wait for the database operation to complete. See {@link Connection#setNetworkTimeout(java.util.concurrent.Executor, int)}
-   * 
+   *
    * @param milliseconds
    *          The time in milliseconds to wait for the database operation to complete.
    * @since 3.5.2

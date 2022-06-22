@@ -21,6 +21,7 @@ import org.apache.ibatis.exceptions.PersistenceException;
  * @author Clinton Begin
  */
 public class LogException extends PersistenceException {
+  // log 异常
 
   private static final long serialVersionUID = 1022924004852350942L;
 

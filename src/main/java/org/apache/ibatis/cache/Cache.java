@@ -40,6 +40,17 @@ import java.util.concurrent.locks.ReadWriteLock;
  */
 
 public interface Cache {
+  // 二级缓存的进口
+  // 五大实现: Perpetual/Weak/Soft/Fifo/Lru
+
+  // 包括
+  //    缓存id
+  //    存入缓存 kv键值对
+  //    根据k获取缓存
+  //    根据k移除缓存
+  //    清空整个缓存
+  //    获取缓存size
+  //    获取读写锁
 
   /**
    * @return The identifier of this cache

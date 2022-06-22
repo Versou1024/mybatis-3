@@ -25,6 +25,15 @@ import org.apache.logging.log4j.spi.AbstractLogger;
  */
 public class Log4j2Impl implements Log {
 
+  // log4j2对于log接口的实现
+  // 借助适配器的力量
+  // 在构造器中完成
+  //     if (logger instanceof AbstractLogger) {
+  //      log = new Log4j2AbstractLoggerImpl((AbstractLogger) logger);
+  //    } else {
+  //      log = new Log4j2LoggerImpl(logger);
+  //    }
+
   private final Log log;
 
   public Log4j2Impl(String clazz) {

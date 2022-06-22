@@ -15,10 +15,10 @@
  */
 package org.apache.ibatis.scripting.xmltags;
 
-import java.util.Map;
-
 import org.apache.ibatis.parsing.GenericTokenParser;
 import org.apache.ibatis.session.Configuration;
+
+import java.util.Map;
 
 /**
  * @author Clinton Begin
@@ -38,7 +38,7 @@ public class ForEachSqlNode implements SqlNode {
 
   public ForEachSqlNode(Configuration configuration, SqlNode contents, String collectionExpression, String index, String item, String open, String close, String separator) {
     this.evaluator = new ExpressionEvaluator();
-    this.collectionExpression = collectionExpression;
+    this.collectionExpression = collectionExpression; // foreach标签的collection属性的String值
     this.contents = contents;
     this.open = open;
     this.close = close;
@@ -50,16 +50,23 @@ public class ForEachSqlNode implements SqlNode {
 
   @Override
   public boolean apply(DynamicContext context) {
+    // 遍历处理哦
+    // foreach也是延迟处理的 -- 必须调用其apply才会生效哦
+
+    // 1. 获取Bind的数据
     Map<String, Object> bindings = context.getBindings();
+    // 2. 解析对应的 <foreach> 标签中的Collection属性指定的的对象--可以是List/HashMap/Array
     final Iterable<?> iterable = evaluator.evaluateIterable(collectionExpression, bindings);
     if (!iterable.iterator().hasNext()) {
       return true;
     }
     boolean first = true;
+    // 3. 接受foreach标签的open属性到sql上
     applyOpen(context);
     int i = 0;
     for (Object o : iterable) {
       DynamicContext oldContext = context;
+      // 3.1 若为第一个元素,不需要添加分隔符,否则需要添加分割符separator
       if (first || separator == null) {
         context = new PrefixedContext(context, "");
       } else {
@@ -67,15 +74,24 @@ public class ForEachSqlNode implements SqlNode {
       }
       int uniqueNumber = context.getUniqueNumber();
       // Issue #709
+      // 3.2 Map.Entry 类型
       if (o instanceof Map.Entry) {
         @SuppressWarnings("unchecked")
         Map.Entry<Object, Object> mapEntry = (Map.Entry<Object, Object>) o;
-        applyIndex(context, mapEntry.getKey(), uniqueNumber);
+        // index 属性绑定的value是 mapEntry.getKey()
+        applyIndex(context, mapEntry.getKey(), uniqueNumber); // here需要注意的就是这个 key和value 的关系哦
+        // item 属性绑定的value是 mapEntry.getValue()
         applyItem(context, mapEntry.getValue(), uniqueNumber);
-      } else {
+      }
+      // 3.3 简答的集合类型
+      else {
+        // index 属性绑定的value是i
         applyIndex(context, i, uniqueNumber);
+        // item 属性绑定的value是o
         applyItem(context, o, uniqueNumber);
       }
+
+      // 将item属性和index属性的数据绑定后就可以应用到context中去
       contents.apply(new FilteredDynamicContext(configuration, context, index, item, uniqueNumber));
       if (first) {
         first = !((PrefixedContext) context).isPrefixApplied();
@@ -83,39 +99,49 @@ public class ForEachSqlNode implements SqlNode {
       context = oldContext;
       i++;
     }
+    // 接受close属性的符号追加到context上 -- 即追加 " " + close
     applyClose(context);
+    // 移除 item与index的绑定
     context.getBindings().remove(item);
     context.getBindings().remove(index);
     return true;
   }
 
   private void applyIndex(DynamicContext context, Object o, int i) {
+    // 接受index -- 数据绑定
     if (index != null) {
+      // <foreach>的index属性 -- 传过来的o就是上面遍历的序号 i 或者是map的结构的 mapEntry.getKey()
       context.bind(index, o);
       context.bind(itemizeItem(index, i), o);
     }
   }
 
   private void applyItem(DynamicContext context, Object o, int i) {
+    // 接受item -- 数据绑定
     if (item != null) {
+      // <foreach>的item属性 -- 传过来的o就是上面遍历的集合中的对象 或者是map的结构的 mapEntry.getValue()
       context.bind(item, o);
       context.bind(itemizeItem(item, i), o);
     }
   }
 
   private void applyOpen(DynamicContext context) {
+    // 添加open属性到sql中
     if (open != null) {
       context.appendSql(open);
     }
   }
 
   private void applyClose(DynamicContext context) {
+    // 添加close属性到sql中
     if (close != null) {
       context.appendSql(close);
     }
   }
 
   private static String itemizeItem(String item, int i) {
+    // ITEM_PREFIX + item + "_" + i
+    // item可以是<foreach>的item属性或index属性值
     return ITEM_PREFIX + item + "_" + i;
   }
 
@@ -158,6 +184,7 @@ public class ForEachSqlNode implements SqlNode {
         return "#{" + newContent + "}";
       });
 
+      // 最终还是会附加到 delegate目标对象  的sql上去
       delegate.appendSql(parser.parse(sql));
     }
 

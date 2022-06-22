@@ -24,8 +24,11 @@ import java.sql.SQLException;
  * @author Clinton Begin
  */
 public class EnumOrdinalTypeHandler<E extends Enum<E>> extends BaseTypeHandler<E> {
+  // 可以注意到 EnumOrdinalTypeHandler 是有一个Class形参的构造器
 
+  // 某个枚举的type
   private final Class<E> type;
+  // type的所有枚举常量
   private final E[] enums;
 
   public EnumOrdinalTypeHandler(Class<E> type) {
@@ -41,11 +44,16 @@ public class EnumOrdinalTypeHandler<E extends Enum<E>> extends BaseTypeHandler<E
 
   @Override
   public void setNonNullParameter(PreparedStatement ps, int i, E parameter, JdbcType jdbcType) throws SQLException {
+    // 存入数据库的枚举值的序号
+    // 即 parameter.ordinal()
+
     ps.setInt(i, parameter.ordinal());
   }
 
   @Override
   public E getNullableResult(ResultSet rs, String columnName) throws SQLException {
+    // 注意搭配: rs.wasNull()
+
     int ordinal = rs.getInt(columnName);
     if (ordinal == 0 && rs.wasNull()) {
       return null;
@@ -73,6 +81,7 @@ public class EnumOrdinalTypeHandler<E extends Enum<E>> extends BaseTypeHandler<E
 
   private E toOrdinalEnum(int ordinal) {
     try {
+      // 根据ordinal转为Enum值哦
       return enums[ordinal];
     } catch (Exception ex) {
       throw new IllegalArgumentException("Cannot convert " + ordinal + " to " + type.getSimpleName() + " by ordinal value.", ex);

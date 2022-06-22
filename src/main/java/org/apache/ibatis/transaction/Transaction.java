@@ -25,6 +25,10 @@ import java.sql.SQLException;
  * @author Clinton Begin
  */
 public interface Transaction {
+  // Transaction 并不是事务 ❗️❗️❗️
+
+  // 包装数据库连接 -- 处理连接生命周期，包括：它的创建、准备、提交/回滚和关闭
+  // 获取连接/提交/回滚/关闭/超时时间
 
   /**
    * Retrieve inner database connection.

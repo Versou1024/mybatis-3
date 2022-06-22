@@ -38,6 +38,9 @@ import org.apache.ibatis.logging.LogFactory;
  * @author Eduardo Macarron
  */
 public class VendorDatabaseIdProvider implements DatabaseIdProvider {
+  // DatabaseIdProvider 的唯一有效内置实现 -- 根据数据库提供商返回的自家数据库产品名字DatabaseProductName作为databaseId
+  // 它以 databaseId 形式返回数据库产品名称
+  // 。如果用户提供了一个属性，它使用它来翻译数据库产品名称 key="Microsoft SQL Server"，value="ms" 将返回 "ms"。如果未指定数据库产品名称或属性且未找到翻译，则它可以返回 null。
 
   private Properties properties;
 
@@ -64,6 +67,7 @@ public class VendorDatabaseIdProvider implements DatabaseIdProvider {
     if (this.properties != null) {
       for (Map.Entry<Object, Object> property : properties.entrySet()) {
         if (productName.contains((String) property.getKey())) {
+          // 可以通过Properties,将数据库提供商的 DatabaseProductName 转为自定义的 property.getValue()
           return (String) property.getValue();
         }
       }
@@ -74,8 +78,11 @@ public class VendorDatabaseIdProvider implements DatabaseIdProvider {
   }
 
   private String getDatabaseProductName(DataSource dataSource) throws SQLException {
+    // 核心:
+
     Connection con = null;
     try {
+      // dataSource.getConnection().getMetaDatda().getDatabaseProductName() -- 数据库产品类型 -- 比如MySQL/Oracle/SQL Server等等
       con = dataSource.getConnection();
       DatabaseMetaData metaData = con.getMetaData();
       return metaData.getDatabaseProductName();

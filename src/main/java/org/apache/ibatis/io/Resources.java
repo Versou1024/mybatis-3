@@ -31,6 +31,8 @@ import java.util.Properties;
  * @author Clinton Begin
  */
 public class Resources {
+  // mybatis 的 io 工具类
+  // Resources -- 了解
 
   private static ClassLoaderWrapper classLoaderWrapper = new ClassLoaderWrapper();
 
@@ -258,6 +260,7 @@ public class Resources {
    * @throws ClassNotFoundException If the class cannot be found (duh!)
    */
   public static Class<?> classForName(String className) throws ClassNotFoundException {
+    // 使用ClassLoader加载全限定类型的class
     return classLoaderWrapper.classForName(className);
   }
 

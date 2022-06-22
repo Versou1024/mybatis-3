@@ -15,21 +15,18 @@
  */
 package org.apache.ibatis.scripting.xmltags;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.StringTokenizer;
-
 import org.apache.ibatis.session.Configuration;
+
+import java.util.*;
 
 /**
  * @author Clinton Begin
  */
 public class TrimSqlNode implements SqlNode {
+  // 对应 <trim> 的 sqlNode
 
   private final SqlNode contents;
+  // 四大属性
   private final String prefix;
   private final String suffix;
   private final List<String> prefixesToOverride;
@@ -37,6 +34,7 @@ public class TrimSqlNode implements SqlNode {
   private final Configuration configuration;
 
   public TrimSqlNode(Configuration configuration, SqlNode contents, String prefix, String prefixesToOverride, String suffix, String suffixesToOverride) {
+    // prefixesToOverride 和 suffixesToOverride 可以通过 | 作为分隔符配置多个
     this(configuration, contents, prefix, parseOverrides(prefixesToOverride), suffix, parseOverrides(suffixesToOverride));
   }
 
@@ -51,8 +49,16 @@ public class TrimSqlNode implements SqlNode {
 
   @Override
   public boolean apply(DynamicContext context) {
+    // 如何将 TrimSqlNode 应用到 context 上
+
+    // 1. 使用定制的 -- FilteredDynamicContext  帮助 trim 标签做过滤即可
     FilteredDynamicContext filteredDynamicContext = new FilteredDynamicContext(context);
+    // 2. 对 contents即MixedSqlNode 应用到 filteredDynamicContext 上去
+    // 因此 contents即MixedSqlNode 中节点的Sql最终是创建到 filteredDynamicContext的成员变阿玲 sqlBuffer上
     boolean result = contents.apply(filteredDynamicContext);
+    // 3. 上面是将 content 应用到 filteredDynamicContext 的 sqlBuffer上
+    // 而 FilteredDynamicContext 是封装了 真正的context 的
+    // 需要将创建sql片段最终追加到 context 上才是完整的
     filteredDynamicContext.applyAll();
     return result;
   }
@@ -70,9 +76,18 @@ public class TrimSqlNode implements SqlNode {
   }
 
   private class FilteredDynamicContext extends DynamicContext {
+    // DynamicContext包装器 -- 主要是提供Filter功能的能力 -- 符合trim的需求
+
+    // 真实的DynamicContext
     private DynamicContext delegate;
+    // 标志位 --
+    // prefixApplied - 是否已经处理过前缀 - 即<trim>标签的prefix和prefixOverride属性
+    // suffixApplied - 是否已经处理过后缀 - 即<trim>标签的suffix和suffixOverride属性
     private boolean prefixApplied;
     private boolean suffixApplied;
+
+    // 当前Trim标签的sqlBuffer -- 不和delegate的sqlBuilder搅合
+    // 当处理完后,通过FilteredDynamicContext.apply()将其sqlBuffer追加到delegate上
     private StringBuilder sqlBuffer;
 
     public FilteredDynamicContext(DynamicContext delegate) {
@@ -84,12 +99,15 @@ public class TrimSqlNode implements SqlNode {
     }
 
     public void applyAll() {
+      // 1. 获取到<trim>内部标签的转换出来的最终的sql即 trimmedUppercaseSql
       sqlBuffer = new StringBuilder(sqlBuffer.toString().trim());
       String trimmedUppercaseSql = sqlBuffer.toString().toUpperCase(Locale.ENGLISH);
+      // 2. 向 trimmedUppercaseSql 处理<trim>标签的要求
       if (trimmedUppercaseSql.length() > 0) {
-        applyPrefix(sqlBuffer, trimmedUppercaseSql);
-        applySuffix(sqlBuffer, trimmedUppercaseSql);
+        applyPrefix(sqlBuffer, trimmedUppercaseSql); // 添加<trim>标签的prefix/以及移除prefixOverride -- 处理前缀添加和移除
+        applySuffix(sqlBuffer, trimmedUppercaseSql); // 添加<trim>标签的suffix/以及移除suffixOverride -- 处理后缀添加和移除
       }
+      // 3. ❗️❗️❗️ 追加到 delegate即真实的context 上
       delegate.appendSql(sqlBuffer.toString());
     }
 
@@ -119,16 +137,23 @@ public class TrimSqlNode implements SqlNode {
     }
 
     private void applyPrefix(StringBuilder sql, String trimmedUppercaseSql) {
+      // 以前缀为例 ~~ 粗略查看
+
       if (!prefixApplied) {
         prefixApplied = true;
+        // 1. 是否有 prefixesToOverride 属性 -- prefixesToOverride可以是一个数组,其中通过 "|"分割开来
         if (prefixesToOverride != null) {
           for (String toRemove : prefixesToOverride) {
+            // 1.1 遍历 prefixesToOverride 检查 trimmedUppercaseSql 是否以其中某个元素开头
+            // 如果满足 -- 就需要删除这个前缀
+            // 一旦满足 -- 就会立即break
             if (trimmedUppercaseSql.startsWith(toRemove)) {
               sql.delete(0, toRemove.trim().length());
               break;
             }
           }
         }
+        // 2. 是否有prefix属性,有的话就插入 " " + prefix
         if (prefix != null) {
           sql.insert(0, " ");
           sql.insert(0, prefix);

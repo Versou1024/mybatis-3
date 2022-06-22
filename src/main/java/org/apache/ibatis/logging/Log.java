@@ -19,6 +19,7 @@ package org.apache.ibatis.logging;
  * @author Clinton Begin
  */
 public interface Log {
+  // ibatis的log只有error/debug/trace/warn
 
   boolean isDebugEnabled();
 

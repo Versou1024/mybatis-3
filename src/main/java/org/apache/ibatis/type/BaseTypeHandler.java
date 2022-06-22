@@ -15,13 +15,13 @@
  */
 package org.apache.ibatis.type;
 
+import org.apache.ibatis.executor.result.ResultMapException;
+import org.apache.ibatis.session.Configuration;
+
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import org.apache.ibatis.executor.result.ResultMapException;
-import org.apache.ibatis.session.Configuration;
 
 /**
  * The base {@link TypeHandler} for references a generic type.
@@ -36,6 +36,11 @@ import org.apache.ibatis.session.Configuration;
  * @author Kzuki Shimizu
  */
 public abstract class BaseTypeHandler<T> extends TypeReference<T> implements TypeHandler<T> {
+  // BaseTypeHandler的基础实现
+  // 用于引用泛型类型的基本TypeHandler 。
+  // 重要提示：从 3.5.0 开始，此类从不调用ResultSet.wasNull()和CallableStatement.wasNull()方法来处理 SQL NULL值。换句话说， null值处理应该在子类上执行。
+
+  // 主要是 -- 提供基础的检查
 
   /**
    * @deprecated Since 3.5.0 - See https://github.com/mybatis/mybatis-3/issues/1203. This field will remove future.
@@ -102,11 +107,14 @@ public abstract class BaseTypeHandler<T> extends TypeReference<T> implements Typ
     }
   }
 
+  // 确保parameter非null值
   public abstract void setNonNullParameter(PreparedStatement ps, int i, T parameter, JdbcType jdbcType) throws SQLException;
 
-  /**
-   * @param columnName Colunm name, when configuration <code>useColumnLabel</code> is <code>false</code>
-   */
+
+
+  // 子类实现BaseTypeHandler,需要注意一点那就是ResultSet可能是空的
+  // 子类需要调用 调用ResultSet.wasNull()和CallableStatement.wasNull()方法来处理 SQL NULL值。
+
   public abstract T getNullableResult(ResultSet rs, String columnName) throws SQLException;
 
   public abstract T getNullableResult(ResultSet rs, int columnIndex) throws SQLException;

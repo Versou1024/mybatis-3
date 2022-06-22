@@ -20,6 +20,7 @@ package org.apache.ibatis.exceptions;
  */
 @SuppressWarnings("deprecation")
 public class PersistenceException extends IbatisException {
+  // 持久性异常
 
   private static final long serialVersionUID = -7537395265357977271L;
 

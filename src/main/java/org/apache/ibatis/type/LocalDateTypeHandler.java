@@ -26,6 +26,7 @@ import java.time.LocalDate;
  * @author Tomas Rohovsky
  */
 public class LocalDateTypeHandler extends BaseTypeHandler<LocalDate> {
+  // 支持LocalDate
 
   @Override
   public void setNonNullParameter(PreparedStatement ps, int i, LocalDate parameter, JdbcType jdbcType)

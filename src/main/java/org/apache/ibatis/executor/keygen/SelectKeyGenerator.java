@@ -15,9 +15,6 @@
  */
 package org.apache.ibatis.executor.keygen;
 
-import java.sql.Statement;
-import java.util.List;
-
 import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.executor.ExecutorException;
 import org.apache.ibatis.mapping.MappedStatement;
@@ -26,16 +23,24 @@ import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.RowBounds;
 
+import java.sql.Statement;
+import java.util.List;
+
 /**
  * @author Clinton Begin
  * @author Jeff Butler
  */
 public class SelectKeyGenerator implements KeyGenerator {
+  // 针对 selectKey 标签使用
 
+  // select key 后缀
   public static final String SELECT_KEY_SUFFIX = "!selectKey";
+  // 前置执行还是后置执行
   private final boolean executeBefore;
+  // SelectKey标签对应的 MappedStatement -- 可执行的sql语句
   private final MappedStatement keyStatement;
 
+  // 唯一构造函数: 含有待执行的KeySelect标签的keyStatement,以及前置还是后置执行的executeBefore信息
   public SelectKeyGenerator(MappedStatement keyStatement, boolean executeBefore) {
     this.executeBefore = executeBefore;
     this.keyStatement = keyStatement;
@@ -43,6 +48,7 @@ public class SelectKeyGenerator implements KeyGenerator {
 
   @Override
   public void processBefore(Executor executor, MappedStatement ms, Statement stmt, Object parameter) {
+    // 前置处理
     if (executeBefore) {
       processGeneratedKeys(executor, ms, parameter);
     }
@@ -50,12 +56,14 @@ public class SelectKeyGenerator implements KeyGenerator {
 
   @Override
   public void processAfter(Executor executor, MappedStatement ms, Statement stmt, Object parameter) {
+    // 后置处理
     if (!executeBefore) {
       processGeneratedKeys(executor, ms, parameter);
     }
   }
 
   private void processGeneratedKeys(Executor executor, MappedStatement ms, Object parameter) {
+    // 核心一:
     try {
       if (parameter != null && keyStatement != null && keyStatement.getKeyProperties() != null) {
         String[] keyProperties = keyStatement.getKeyProperties();

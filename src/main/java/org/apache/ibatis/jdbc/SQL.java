@@ -19,6 +19,7 @@ package org.apache.ibatis.jdbc;
  * @author Clinton Begin
  */
 public class SQL extends AbstractSQL<SQL> {
+  // SQL 继承自 AbstractSQL
 
   @Override
   public SQL getSelf() {

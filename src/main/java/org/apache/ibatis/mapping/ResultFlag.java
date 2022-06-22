@@ -19,5 +19,8 @@ package org.apache.ibatis.mapping;
  * @author Clinton Begin
  */
 public enum ResultFlag {
+  // resultMap->id标签仅仅用 ResultFlag.ID
+  // resultMap->Constructor->arg标签仅仅用 ResultFlag.CONSTRUCTOR
+  // resultMap->Constructor->idArg标签用 ResultFlag.CONSTRUCTOR + ResultFlag.ID
   ID, CONSTRUCTOR
 }

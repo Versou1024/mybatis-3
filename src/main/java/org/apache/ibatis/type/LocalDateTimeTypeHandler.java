@@ -26,6 +26,7 @@ import java.time.LocalDateTime;
  * @author Tomas Rohovsky
  */
 public class LocalDateTimeTypeHandler extends BaseTypeHandler<LocalDateTime> {
+  // 支持转换LocalDateTime
 
   @Override
   public void setNonNullParameter(PreparedStatement ps, int i, LocalDateTime parameter, JdbcType jdbcType)
@@ -35,6 +36,9 @@ public class LocalDateTimeTypeHandler extends BaseTypeHandler<LocalDateTime> {
 
   @Override
   public LocalDateTime getNullableResult(ResultSet rs, String columnName) throws SQLException {
+    // rs.getObject()
+    // 检索此ResultSet对象的当前行中指定列的值，如果支持转换，则将从列的 SQL 类型转换为请求的 Java 数据类型。如果不支持转换或该类型指定了null，则抛出SQLException 。
+    // 至少，实现必须支持附录 B 表 B-3 中定义的转换，以及将适当的用户定义的 SQL 类型转换为实现SQLData或Struct的 Java 类型。可能支持其他转换并且由供应商定义
     return rs.getObject(columnName, LocalDateTime.class);
   }
 

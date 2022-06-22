@@ -24,6 +24,9 @@ import org.apache.ibatis.scripting.defaults.DefaultParameterHandler;
 import org.apache.ibatis.session.Configuration;
 
 public interface LanguageDriver {
+  // LanguageDriver 作用 -- 从mapper.xml或注解中获取要读取的语句,即作为SqlSource
+  // 以及获取 ParameterHandler
+  // 非常重要哦 -- 我丢 好厉害的LanguageDriver
 
   /**
    * Creates a {@link ParameterHandler} that passes the actual parameters to the the JDBC statement.
@@ -36,6 +39,7 @@ public interface LanguageDriver {
    * @see DefaultParameterHandler
    */
   ParameterHandler createParameterHandler(MappedStatement mappedStatement, Object parameterObject, BoundSql boundSql);
+  // 创建一个将实际ParameterHandler传递给 JDBC 语句的 ParameterHandler。
 
   /**
    * Creates an {@link SqlSource} that will hold the statement read from a mapper xml file.
@@ -47,6 +51,11 @@ public interface LanguageDriver {
    * @return
    */
   SqlSource createSqlSource(Configuration configuration, XNode script, Class<?> parameterType);
+  // 创建一个 SqlSource ，它将保存从  mapper.xml  文件中读取的语句。
+  // context是DML标签的XNode
+  // parameterTypeClass是DML标签的paramType属性对应的Class
+
+  // 使用处 -- 会在 XMLStatementBuilder 中创建SqlSource -- 用来解析<Select>/<Insert>等标签上的脚本script
 
   /**
    * Creates an {@link SqlSource} that will hold the statement read from an annotation.
@@ -58,5 +67,9 @@ public interface LanguageDriver {
    * @return
    */
   SqlSource createSqlSource(Configuration configuration, String script, Class<?> parameterType);
+  // 创建一个SqlSource来保存从  注解  中读取的语句。
+  // 它在启动期间被调用，当从类或 xml 文件中读取映射语句时
+
+  // 使用处 -- 会在 MapperAnnotationBuilder 中创建SqlSource -- 用来解析@Select/@Insert等注解上的脚本script
 
 }

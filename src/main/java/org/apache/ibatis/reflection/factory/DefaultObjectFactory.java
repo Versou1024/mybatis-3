@@ -15,33 +15,27 @@
  */
 package org.apache.ibatis.reflection.factory;
 
-import java.io.Serializable;
-import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import java.util.stream.Collectors;
-
 import org.apache.ibatis.reflection.ReflectionException;
 import org.apache.ibatis.reflection.Reflector;
+
+import java.io.Serializable;
+import java.lang.reflect.Constructor;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Clinton Begin
  */
 public class DefaultObjectFactory implements ObjectFactory, Serializable {
+  // ObjectFactory 的默认实现
+  // 用来创建指定Type的对象 -- 提供实例化能力[通过反射实现的]
 
   private static final long serialVersionUID = -8855120656740914948L;
 
   @Override
   public <T> T create(Class<T> type) {
+    // 空参构造
+
     return create(type, null, null);
   }
 
@@ -54,11 +48,15 @@ public class DefaultObjectFactory implements ObjectFactory, Serializable {
   }
 
   private  <T> T instantiateClass(Class<T> type, List<Class<?>> constructorArgTypes, List<Object> constructorArgs) {
+    // 核心一:  实例化Class
+
     try {
       Constructor<T> constructor;
+      // 0. 未指定 constructorArgTypes/constructorArgs 就需要去查找 constructor 然后反射实例化
       if (constructorArgTypes == null || constructorArgs == null) {
         constructor = type.getDeclaredConstructor();
         try {
+          // 1. 空参构造器的实例化
           return constructor.newInstance();
         } catch (IllegalAccessException e) {
           if (Reflector.canControlMemberAccessible()) {
@@ -69,6 +67,7 @@ public class DefaultObjectFactory implements ObjectFactory, Serializable {
           }
         }
       }
+      // 2. 指定了构造器形参下的获取构造器constructor,然后反射实例化出来
       constructor = type.getDeclaredConstructor(constructorArgTypes.toArray(new Class[constructorArgTypes.size()]));
       try {
         return constructor.newInstance(constructorArgs.toArray(new Object[constructorArgs.size()]));
@@ -90,6 +89,12 @@ public class DefaultObjectFactory implements ObjectFactory, Serializable {
   }
 
   protected Class<?> resolveInterface(Class<?> type) {
+    // 核心二: 解析type
+
+    // 对于部分接口转为某个实际类型使用 --
+    // 比如 List/Collection/Iterable 转为 ArrayList 使用
+    // Map 转为 HashMap 使用
+    // ...
     Class<?> classToCreate;
     if (type == List.class || type == Collection.class || type == Iterable.class) {
       classToCreate = ArrayList.class;
@@ -107,6 +112,8 @@ public class DefaultObjectFactory implements ObjectFactory, Serializable {
 
   @Override
   public <T> boolean isCollection(Class<T> type) {
+    // 检查是否为 Collection 接口
+
     return Collection.class.isAssignableFrom(type);
   }
 

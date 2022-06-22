@@ -23,11 +23,13 @@ import org.apache.ibatis.logging.LogFactory;
  * @author Clinton Begin
  */
 public class LoggingCache implements Cache {
+  // 带有日志功能的Cache -- 默认会启用的装饰器
+  // 会记录缓存的请求次数以及缓存的命中次数
 
   private final Log log;
   private final Cache delegate;
-  protected int requests = 0;
-  protected int hits = 0;
+  protected int requests = 0; // 请求缓存次数
+  protected int hits = 0; // 请求命中次数
 
   public LoggingCache(Cache delegate) {
     this.delegate = delegate;
@@ -83,6 +85,7 @@ public class LoggingCache implements Cache {
   }
 
   private double getHitRatio() {
+    // 命中率
     return (double) hits / (double) requests;
   }
 

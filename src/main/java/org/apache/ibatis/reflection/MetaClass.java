@@ -15,16 +15,16 @@
  */
 package org.apache.ibatis.reflection;
 
+import org.apache.ibatis.reflection.invoker.GetFieldInvoker;
+import org.apache.ibatis.reflection.invoker.Invoker;
+import org.apache.ibatis.reflection.invoker.MethodInvoker;
+import org.apache.ibatis.reflection.property.PropertyTokenizer;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Collection;
-
-import org.apache.ibatis.reflection.invoker.GetFieldInvoker;
-import org.apache.ibatis.reflection.invoker.Invoker;
-import org.apache.ibatis.reflection.invoker.MethodInvoker;
-import org.apache.ibatis.reflection.property.PropertyTokenizer;
 
 /**
  * @author Clinton Begin
@@ -54,9 +54,12 @@ public class MetaClass {
   }
 
   public String findProperty(String name, boolean useCamelCaseMapping) {
+    // 1. 使用骆驼案例映射
     if (useCamelCaseMapping) {
+      // 1.1 使用的话,就对name进行替换操作
       name = name.replace("_", "");
     }
+    // 2. 查找属性
     return findProperty(name);
   }
 
@@ -146,6 +149,7 @@ public class MetaClass {
   }
 
   public boolean hasGetter(String name) {
+    // 借着MapWrapper分析 假设name是hobbies[1]
     PropertyTokenizer prop = new PropertyTokenizer(name);
     if (prop.hasNext()) {
       if (reflector.hasGetter(prop.getName())) {

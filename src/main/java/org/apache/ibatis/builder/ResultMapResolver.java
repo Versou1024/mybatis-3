@@ -15,23 +15,27 @@
  */
 package org.apache.ibatis.builder;
 
-import java.util.List;
-
 import org.apache.ibatis.mapping.Discriminator;
 import org.apache.ibatis.mapping.ResultMap;
 import org.apache.ibatis.mapping.ResultMapping;
+
+import java.util.List;
 
 /**
  * @author Eduardo Macarron
  */
 public class ResultMapResolver {
-  private final MapperBuilderAssistant assistant;
-  private final String id;
-  private final Class<?> type;
-  private final String extend;
-  private final Discriminator discriminator;
+  // ResultMap的解析器
+
+  private final MapperBuilderAssistant assistant; // Mapper构建过程中的辅助器
+  private final String id; // resultMap的id
+  private final Class<?> type; // 该resultMap的java类型时
+  private final String extend; // 继承的父resultMap的id
+  private final Discriminator discriminator; // 鉴别器
+  // 其余id-result-collection-assocation-idArg-arg等标签都被解析为ResultMapping被加入到resultMapping是中
+  // resultMap标签下的所有子标签,例如id/idArg/arg/result/collection/assocation 都被解析对应的ResultMapping加入到resultMappings集合中
   private final List<ResultMapping> resultMappings;
-  private final Boolean autoMapping;
+  private final Boolean autoMapping; // 是否自动映射
 
   public ResultMapResolver(MapperBuilderAssistant assistant, String id, Class<?> type, String extend, Discriminator discriminator, List<ResultMapping> resultMappings, Boolean autoMapping) {
     this.assistant = assistant;
@@ -44,6 +48,7 @@ public class ResultMapResolver {
   }
 
   public ResultMap resolve() {
+    // 核心之一 --
     return assistant.addResultMap(this.id, this.type, this.extend, this.discriminator, this.resultMappings, this.autoMapping);
   }
 

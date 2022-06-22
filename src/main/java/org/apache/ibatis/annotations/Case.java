@@ -27,11 +27,13 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({})
 public @interface Case {
-  String value();
+  // 搭配鉴定器使用 --  @TypeDiscriminator
 
-  Class<?> type();
+  String value(); // 和 @TypeDiscriminator.column() 的值相等时,该case生效
 
-  Result[] results() default {};
+  Class<?> type(); // 类型
 
-  Arg[] constructArgs() default {};
+  Result[] results() default {}; // 生效时的结果集
+
+  Arg[] constructArgs() default {}; // 也可以使用构造器对应结果集
 }

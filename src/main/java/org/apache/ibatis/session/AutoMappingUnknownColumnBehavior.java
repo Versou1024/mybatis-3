@@ -26,6 +26,26 @@ import org.apache.ibatis.mapping.MappedStatement;
  * @author Kazuki Shimizu
  */
 public enum AutoMappingUnknownColumnBehavior {
+  // 触发场景: 无法进行自动映射时报出异常 -- 即ResultSet结果集中某些列无法自动映射到对象的属性上就会触发
+  // 比如:
+  // <select id="xx" resultType="com.sdk.developer.SysConfig>
+  // select id,name,age,band
+  // from t_sys_config
+  // </select>
+  // 而 SysConfig 对象中有
+  // 1. 只有 id 和 name 属性也会报错
+  // 2. 三个属性都有,但没有对应的set方法
+  // 3. 三个属性都有,且都有对应的set方法,当时band属性为Band对象 -- 无法在TypeHandlerRegistry找到对应的TypeHandler也会触发报错
+  // 注意: 没有空构造器的时候还没轮到AutoMappingUnknownColumnBehavior.doAction()就会触发异常
+
+  // 实际上
+  // 上面的等价于
+  // <resultMap id="sysConfig" type="com.sdk.developer.SysConfig" autoMapping="true">
+  //
+  // <select id="xx" resultMap="sysConfig">
+  // select id,name,age,band
+  // from t_sys_config
+  // </select>
 
   /**
    * Do nothing (Default).

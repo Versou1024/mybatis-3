@@ -15,19 +15,24 @@
  */
 package org.apache.ibatis.scripting.xmltags;
 
+import org.apache.ibatis.session.Configuration;
+
 import java.util.Collections;
 import java.util.List;
-
-import org.apache.ibatis.session.Configuration;
 
 /**
  * @author Clinton Begin
  */
 public class SetSqlNode extends TrimSqlNode {
+  // 处理 <set> 标签的sql如何追加到contents中
+  // note: SetSqlNode也是继承的TrimSqlNode哦
 
   private static final List<String> COMMA = Collections.singletonList(",");
 
   public SetSqlNode(Configuration configuration,SqlNode contents) {
+    // 同理 -- 使用TrimSqlNode的能力,
+    // 前缀 -- SET
+    // 前缀覆盖/后缀覆盖 -- ,
     super(configuration, contents, "SET", COMMA, null, COMMA);
   }
 

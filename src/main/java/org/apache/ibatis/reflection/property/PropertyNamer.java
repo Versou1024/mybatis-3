@@ -15,9 +15,9 @@
  */
 package org.apache.ibatis.reflection.property;
 
-import java.util.Locale;
-
 import org.apache.ibatis.reflection.ReflectionException;
+
+import java.util.Locale;
 
 /**
  * @author Clinton Begin
@@ -29,9 +29,14 @@ public final class PropertyNamer {
   }
 
   public static String methodToProperty(String name) {
+    // 从set或get方法解析处属性名
+
+    // 1. is方法
     if (name.startsWith("is")) {
       name = name.substring(2);
-    } else if (name.startsWith("get") || name.startsWith("set")) {
+    }
+    // 2. get/set方法
+    else if (name.startsWith("get") || name.startsWith("set")) {
       name = name.substring(3);
     } else {
       throw new ReflectionException("Error parsing property name '" + name + "'.  Didn't start with 'is', 'get' or 'set'.");
@@ -49,6 +54,7 @@ public final class PropertyNamer {
   }
 
   public static boolean isGetter(String name) {
+    // get或者is开头就是认为get方法哦
     return (name.startsWith("get") && name.length() > 3) || (name.startsWith("is") && name.length() > 2);
   }
 

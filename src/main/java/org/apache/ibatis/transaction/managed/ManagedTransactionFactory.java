@@ -15,14 +15,13 @@
  */
 package org.apache.ibatis.transaction.managed;
 
-import java.sql.Connection;
-import java.util.Properties;
-
-import javax.sql.DataSource;
-
 import org.apache.ibatis.session.TransactionIsolationLevel;
 import org.apache.ibatis.transaction.Transaction;
 import org.apache.ibatis.transaction.TransactionFactory;
+
+import java.sql.Connection;
+import java.util.Properties;
+import javax.sql.DataSource;
 
 /**
  * Creates {@link ManagedTransaction} instances.
@@ -32,12 +31,26 @@ import org.apache.ibatis.transaction.TransactionFactory;
  * @see ManagedTransaction
  */
 public class ManagedTransactionFactory implements TransactionFactory {
+  // 创建ManagedTransaction实例
+  // <environments default="development">
+  //        <environment id="development">
+  //            <transactionManager type="JDBC"/>
+  //            <dataSource type="POOLED">
+  //                <!-- 数据库连接信息 -->
+  //                <property name="driver" value="${driver}"/>
+  //                <property name="url" value="${url}"/>
+  //                <property name="username" value="${username}"/>
+  //                <property name="password" value="${password}"/>
+  //            </dataSource>
+  //        </environment>
+  //    </environments>
 
   private boolean closeConnection = true;
 
   @Override
   public void setProperties(Properties props) {
     if (props != null) {
+      //
       String closeConnectionProperty = props.getProperty("closeConnection");
       if (closeConnectionProperty != null) {
         closeConnection = Boolean.valueOf(closeConnectionProperty);
@@ -55,6 +68,7 @@ public class ManagedTransactionFactory implements TransactionFactory {
     // Silently ignores autocommit and isolation level, as managed transactions are entirely
     // controlled by an external manager.  It's silently ignored so that
     // code remains portable between managed and unmanaged configurations.
+    // 静默忽略自动提交和隔离级别，因为托管事务完全由外部管理器控制。它被静默忽略，以便代码在托管和非托管配置之间保持可移植性。
     return new ManagedTransaction(ds, level, closeConnection);
   }
 }

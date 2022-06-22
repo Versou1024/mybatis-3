@@ -24,9 +24,10 @@ import java.net.URL;
  * @author Clinton Begin
  */
 public class ClassLoaderWrapper {
+  // ClassLoader的包装器
 
   ClassLoader defaultClassLoader;
-  ClassLoader systemClassLoader;
+  ClassLoader systemClassLoader; // 系统类加载器
 
   ClassLoaderWrapper() {
     try {
@@ -176,6 +177,7 @@ public class ClassLoaderWrapper {
    * @throws ClassNotFoundException - Remember the wisdom of Judge Smails: Well, the world needs ditch diggers, too.
    */
   Class<?> classForName(String name, ClassLoader[] classLoader) throws ClassNotFoundException {
+    // 遍历ClassLoader,使用Class.forName()查找Class
 
     for (ClassLoader cl : classLoader) {
 
@@ -202,6 +204,12 @@ public class ClassLoaderWrapper {
   }
 
   ClassLoader[] getClassLoaders(ClassLoader classLoader) {
+    // 获取各个级别的ClassLoaders
+    // 1. 用户指定的ClassLoader
+    // 2. 默认的ClassLoader  -- 需要调用set设置进去
+    // 3. 当前线程ClassLoader
+    // 4. 加载ClassLoaderWrapper的classLoader
+    // 5. 系统类加载器 -- 兜底
     return new ClassLoader[]{
         classLoader,
         defaultClassLoader,

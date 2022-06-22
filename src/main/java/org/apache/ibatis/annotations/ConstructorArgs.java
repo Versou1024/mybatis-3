@@ -28,5 +28,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface ConstructorArgs {
+
+  // 指定构造器的Arg,然后将结果集映射上去
+  // 收集一组结果传递给一个结果对象的构造方法。属性有：value，它是形式参数数组。
+
   Arg[] value() default {};
 }

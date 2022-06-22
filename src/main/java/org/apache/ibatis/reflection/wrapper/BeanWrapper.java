@@ -15,21 +15,19 @@
  */
 package org.apache.ibatis.reflection.wrapper;
 
-import java.util.List;
-
-import org.apache.ibatis.reflection.ExceptionUtil;
-import org.apache.ibatis.reflection.MetaClass;
-import org.apache.ibatis.reflection.MetaObject;
-import org.apache.ibatis.reflection.ReflectionException;
-import org.apache.ibatis.reflection.SystemMetaObject;
+import org.apache.ibatis.reflection.*;
 import org.apache.ibatis.reflection.factory.ObjectFactory;
 import org.apache.ibatis.reflection.invoker.Invoker;
 import org.apache.ibatis.reflection.property.PropertyTokenizer;
+
+import java.util.List;
 
 /**
  * @author Clinton Begin
  */
 public class BeanWrapper extends BaseWrapper {
+  // 用来对非Collection非Map的普通对象构建BeanWrapper
+  // 获取Bean的访问器属性
 
   private final Object object;
   private final MetaClass metaClass;
@@ -42,10 +40,12 @@ public class BeanWrapper extends BaseWrapper {
 
   @Override
   public Object get(PropertyTokenizer prop) {
+    // 1. 如果fullName是有[],就需哟啊解析出对应的集合,然后从集合获取值
     if (prop.getIndex() != null) {
       Object collection = resolveCollection(prop, object);
       return getCollectionValue(prop, collection);
     } else {
+      // 2. 普通的直接调用getBeanProperty()方法
       return getBeanProperty(prop, object);
     }
   }
@@ -67,11 +67,13 @@ public class BeanWrapper extends BaseWrapper {
 
   @Override
   public String[] getGetterNames() {
+    // 实际委托给 MetaObject的Reflector
     return metaClass.getGetterNames();
   }
 
   @Override
   public String[] getSetterNames() {
+    // 实际委托给 MetaObject的Reflector
     return metaClass.getSetterNames();
   }
 
@@ -126,7 +128,10 @@ public class BeanWrapper extends BaseWrapper {
 
   @Override
   public boolean hasGetter(String name) {
+    // 借着MapWrapper分析 假设name是hobbies
+    // BeanWrapper包装的person对象
     PropertyTokenizer prop = new PropertyTokenizer(name);
+    // 类似MapWrapper的处理
     if (prop.hasNext()) {
       if (metaClass.hasGetter(prop.getIndexedName())) {
         MetaObject metaValue = metaObject.metaObjectForProperty(prop.getIndexedName());
@@ -158,6 +163,7 @@ public class BeanWrapper extends BaseWrapper {
   }
 
   private Object getBeanProperty(PropertyTokenizer prop, Object object) {
+    // 引用其get方法哦
     try {
       Invoker method = metaClass.getGetInvoker(prop.getName());
       try {

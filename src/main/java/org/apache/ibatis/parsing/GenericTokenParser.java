@@ -19,6 +19,10 @@ package org.apache.ibatis.parsing;
  * @author Clinton Begin
  */
 public class GenericTokenParser {
+  // 通用的令牌解析
+  // 主要是指定openToken和closeToken,然后去指定text中查找openToken和closeToken中包装的expression表达式
+  // 然后将表达式传递给 handler.handleToken(String expression) 方法运算为对应的对象
+  // 然后就是将整个 解析后text 返回出去
 
   private final String openToken;
   private final String closeToken;
@@ -31,10 +35,12 @@ public class GenericTokenParser {
   }
 
   public String parse(String text) {
+
+    // 0. 空值直接返回
     if (text == null || text.isEmpty()) {
       return "";
     }
-    // search open token
+    // 1. 搜索 openToken
     int start = text.indexOf(openToken);
     if (start == -1) {
       return text;
@@ -44,12 +50,14 @@ public class GenericTokenParser {
     final StringBuilder builder = new StringBuilder();
     StringBuilder expression = null;
     while (start > -1) {
+      // 2. openToken有转义符号时, 说明仅仅为转义效果
       if (start > 0 && src[start - 1] == '\\') {
         // this open token is escaped. remove the backslash and continue.
         builder.append(src, offset, start - offset - 1).append(openToken);
         offset = start + openToken.length();
       } else {
         // found open token. let's search close token.
+        // 3. 找到open令牌。让我们再来搜索close令牌
         if (expression == null) {
           expression = new StringBuilder();
         } else {
@@ -59,12 +67,14 @@ public class GenericTokenParser {
         offset = start + openToken.length();
         int end = text.indexOf(closeToken, offset);
         while (end > -1) {
+          // 4. close令牌是实际上是转义的哦
           if (end > offset && src[end - 1] == '\\') {
             // this close token is escaped. remove the backslash and continue.
             expression.append(src, offset, end - offset - 1).append(closeToken);
             offset = end + closeToken.length();
             end = text.indexOf(closeToken, offset);
           } else {
+            // 5. close令牌有效 -- 获取${}中的expression
             expression.append(src, offset, end - offset);
             break;
           }
@@ -74,12 +84,14 @@ public class GenericTokenParser {
           builder.append(src, start, src.length - start);
           offset = src.length;
         } else {
+          // 6. 去解析 expression 表达式 -- 然后追加到builder中
           builder.append(handler.handleToken(expression.toString()));
           offset = end + closeToken.length();
         }
       }
       start = text.indexOf(openToken, offset);
     }
+    // 7. 将剩余的字符也追加到builder上
     if (offset < src.length) {
       builder.append(src, offset, src.length - offset);
     }

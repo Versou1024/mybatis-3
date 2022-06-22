@@ -15,14 +15,14 @@
  */
 package org.apache.ibatis.annotations;
 
+import org.apache.ibatis.type.JdbcType;
+import org.apache.ibatis.type.TypeHandler;
+import org.apache.ibatis.type.UnknownTypeHandler;
+
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-
-import org.apache.ibatis.type.JdbcType;
-import org.apache.ibatis.type.TypeHandler;
-import org.apache.ibatis.type.UnknownTypeHandler;
 
 /**
  * @author Clinton Begin
@@ -31,19 +31,32 @@ import org.apache.ibatis.type.UnknownTypeHandler;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({})
 public @interface Result {
-  boolean id() default false;
+  // 用于设置结果集
+  // 搭配 @Results 使用
+  // 比如
+  // @SelectProvider(type=UserProvider.class,method="queryUserById")
+  // @Options(useCache=true,flushCache=Options.FlushCachePolicy.FALSE,timeout=10000)
+  // @Results({
+  //    @Result(column="userId",property="userId",id=true),
+  //    @Result(column="userName",property="userName"),
+  //    @Result(column="updateDate",property="updateDate",jdbcType=JdbcType.DATE),
+  //    @Result(column="gendarId",property="gendar",one=@One(select="com.bwf.dao.IGendarDao.findGendarById"))
+  //    @Result(column="userId",property="hobbyList",many=@Many(select="com.bwf.dao.IHobbyDao.findHobbyListByUserId")
+  // })
 
-  String column() default "";
+  boolean id() default false; // 该属性/列是否为id
 
-  String property() default "";
+  String column() default ""; // 属性的对应列名
 
-  Class<?> javaType() default void.class;
+  String property() default ""; // 列名对应的属性名
 
-  JdbcType jdbcType() default JdbcType.UNDEFINED;
+  Class<?> javaType() default void.class; // java类型
 
-  Class<? extends TypeHandler> typeHandler() default UnknownTypeHandler.class;
+  JdbcType jdbcType() default JdbcType.UNDEFINED; // jdbc类型
 
-  One one() default @One;
+  Class<? extends TypeHandler> typeHandler() default UnknownTypeHandler.class; // 指定使用TypeHandler
 
-  Many many() default @Many;
+  One one() default @One; // 多对一
+
+  Many many() default @Many; // 一对多
 }

@@ -30,13 +30,22 @@ import org.apache.ibatis.mapping.StatementType;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface SelectKey {
+  // 等价与 <SelectKey> 标签
+  // @SelectKey(statement="select truncate(rand()*100.0)",keyProperty="id",before="true',keyProperty="id",resultType='int")
+  // 即表示在SQL执行之前 --
+  // 先执行 select truncate(rand()*100.0) 生成一个值
+  // 该值对应的属性为id,列名也为id
+  // 且生成值的类型是int类型
+
+  // 可以用于在insert之前生成id,并且在插入的对象中可以获取到这个id
+
   String[] statement();
 
   String keyProperty();
 
   String keyColumn() default "";
 
-  boolean before();
+  boolean before(); // statement 是否需要在正式SQL之前执行
 
   Class<?> resultType();
 

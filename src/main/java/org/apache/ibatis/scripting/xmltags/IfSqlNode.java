@@ -19,6 +19,8 @@ package org.apache.ibatis.scripting.xmltags;
  * @author Clinton Begin
  */
 public class IfSqlNode implements SqlNode {
+  // 对应<if>标签如何被Context处理
+
   private final ExpressionEvaluator evaluator;
   private final String test;
   private final SqlNode contents;
@@ -31,6 +33,8 @@ public class IfSqlNode implements SqlNode {
 
   @Override
   public boolean apply(DynamicContext context) {
+    // 1. 很简答 -- 使用evaluator验证这个test是否可以通过
+    // 如果可以通过那么<if>标签下的MixedSqlNode,就可以被应用到context上去啦
     if (evaluator.evaluateBoolean(test, context.getBindings())) {
       contents.apply(context);
       return true;

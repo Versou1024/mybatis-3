@@ -24,6 +24,7 @@ import java.sql.SQLException;
  * @author Clinton Begin
  */
 public class StringTypeHandler extends BaseTypeHandler<String> {
+  // 支持 String
 
   @Override
   public void setNonNullParameter(PreparedStatement ps, int i, String parameter, JdbcType jdbcType)

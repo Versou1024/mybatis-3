@@ -15,31 +15,27 @@
  */
 package org.apache.ibatis.type;
 
+import org.apache.ibatis.io.ResolverUtil;
+import org.apache.ibatis.io.Resources;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-
-import org.apache.ibatis.io.ResolverUtil;
-import org.apache.ibatis.io.Resources;
+import java.util.*;
 
 /**
  * @author Clinton Begin
  */
 public class TypeAliasRegistry {
+  // 类型别名注册表
 
+  // 即通过名字找到对应的Class
   private final Map<String, Class<?>> typeAliases = new HashMap<>();
 
   public TypeAliasRegistry() {
+    // 默认注册 -- 基本类型/基本类型数组/包装类型/包装类型数组/
+    // 日期/浮点数/
+    // map/hashmap/list/arraylist/collection/iterator/resultSet
     registerAlias("string", String.class);
 
     registerAlias("byte", Byte.class);
@@ -103,16 +99,19 @@ public class TypeAliasRegistry {
   @SuppressWarnings("unchecked")
   // throws class cast exception as well if types cannot be assigned
   public <T> Class<T> resolveAlias(String string) {
+    // 核心一 -- 解析别名
+
     try {
       if (string == null) {
         return null;
       }
-      // issue #748
       String key = string.toLowerCase(Locale.ENGLISH);
       Class<T> value;
+      // 1. 简单别名,例如 string\int\_int
       if (typeAliases.containsKey(key)) {
         value = (Class<T>) typeAliases.get(key);
       } else {
+        // 2. 全限定类型, 例如 java.lang.String
         value = (Class<T>) Resources.classForName(string);
       }
       return value;
@@ -139,6 +138,9 @@ public class TypeAliasRegistry {
   }
 
   public void registerAlias(Class<?> type) {
+    // 1. 当没有别名时,直接使用type的simpleName作为别名使用
+    // 2. 获取检查类型上是否有@Alias别名注解的值
+
     String alias = type.getSimpleName();
     Alias aliasAnnotation = type.getAnnotation(Alias.class);
     if (aliasAnnotation != null) {
@@ -148,11 +150,14 @@ public class TypeAliasRegistry {
   }
 
   public void registerAlias(String alias, Class<?> value) {
+    // 核心二: 注册指定别名alias对应的class值
+
     if (alias == null) {
       throw new TypeException("The parameter alias cannot be null");
     }
     // issue #748
     String key = alias.toLowerCase(Locale.ENGLISH);
+    // 1. 不允许覆盖,否则报错
     if (typeAliases.containsKey(key) && typeAliases.get(key) != null && !typeAliases.get(key).equals(value)) {
       throw new TypeException("The alias '" + alias + "' is already mapped to the value '" + typeAliases.get(key).getName() + "'.");
     }

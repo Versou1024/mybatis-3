@@ -36,14 +36,26 @@ public class ParameterExpression extends HashMap<String, String> {
   private static final long serialVersionUID = -2417552199605158680L;
 
   public ParameterExpression(String expression) {
+    // 内联参数表达式解析器。支持的语法（简体）：
+    //   inline-parameter = (propertyName | expression) oldJdbcType attributes
+    //   propertyName = /expression language's property navigation path/  比如 person.age -> 对应 property为person.age
+    //   expression = '(' /expression language's expression/ ')'          比如 (person.age + 1) -> 对应 expression为 person.age + 1
+    //   oldJdbcType = ':' /any valid jdbc type/
+    //   attributes = (',' attribute)*
+    //   attribute = name '=' value
+    // 比如常见的 #{userName,jdbcType=VARCHAR}
     parse(expression);
   }
 
   private void parse(String expression) {
+    // skipWS() 跳过小于0x20的字符char哦 -- 直到遇到第一个大于0x20的有效字符
     int p = skipWS(expression, 0);
+    // 如果第一个符号是"("那就认为是表达式
     if (expression.charAt(p) == '(') {
       expression(expression, p + 1);
-    } else {
+    }
+    // 如果第一个符号不是"("那就认为是属性值 -- 99%的抢鲲
+    else {
       property(expression, p);
     }
   }
@@ -65,7 +77,9 @@ public class ParameterExpression extends HashMap<String, String> {
 
   private void property(String expression, int left) {
     if (left < expression.length()) {
+      // 1. 直到遇到","或者":"符号后停下俩
       int right = skipUntil(expression, left, ",:");
+      // 2. 截取出属性
       put("property", trimmedStr(expression, left, right));
       jdbcTypeOpt(expression, right);
     }

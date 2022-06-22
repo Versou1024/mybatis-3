@@ -15,14 +15,14 @@
  */
 package org.apache.ibatis.cache.decorators;
 
+import org.apache.ibatis.cache.Cache;
+import org.apache.ibatis.logging.Log;
+import org.apache.ibatis.logging.LogFactory;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import org.apache.ibatis.cache.Cache;
-import org.apache.ibatis.logging.Log;
-import org.apache.ibatis.logging.LogFactory;
 
 /**
  * The 2nd level cache transactional buffer.
@@ -36,16 +36,23 @@ import org.apache.ibatis.logging.LogFactory;
  * @author Eduardo Macarron
  */
 public class TransactionalCache implements Cache {
+  // 事务Cache -- 和事务的提交和回滚有关系
+  // 在TransactionalCacheManger中被使用到
 
   private static final Log log = LogFactory.getLog(TransactionalCache.class);
 
   private final Cache delegate;
+  // 是否在commit时清除delegate缓存
   private boolean clearOnCommit;
+  // putObject时将数据存入entriesToAddOnCommit
+  // 然后事务提交时会将entriesToAddOnCommit中的entry写入到delegate中
   private final Map<Object, Object> entriesToAddOnCommit;
+  // getObject()结果为null时,会将对应的key写入entriesMissedInCache
   private final Set<Object> entriesMissedInCache;
 
   public TransactionalCache(Cache delegate) {
     this.delegate = delegate;
+    // 默认是false
     this.clearOnCommit = false;
     this.entriesToAddOnCommit = new HashMap<>();
     this.entriesMissedInCache = new HashSet<>();
@@ -93,6 +100,7 @@ public class TransactionalCache implements Cache {
   }
 
   public void commit() {
+    // 提交
     if (clearOnCommit) {
       delegate.clear();
     }
@@ -101,20 +109,24 @@ public class TransactionalCache implements Cache {
   }
 
   public void rollback() {
+    // 回滚
     unlockMissedEntries();
     reset();
   }
 
   private void reset() {
+    // 重置 -- 清空 entriesToAddOnCommit/entriesMissedInCache
     clearOnCommit = false;
     entriesToAddOnCommit.clear();
     entriesMissedInCache.clear();
   }
 
   private void flushPendingEntries() {
+    // 1. commit时将entriesToAddOnCommit都写入到delegate中
     for (Map.Entry<Object, Object> entry : entriesToAddOnCommit.entrySet()) {
       delegate.putObject(entry.getKey(), entry.getValue());
     }
+    // 2. entriesMissedInCache也写入到delegate中,value值写为null
     for (Object entry : entriesMissedInCache) {
       if (!entriesToAddOnCommit.containsKey(entry)) {
         delegate.putObject(entry, null);

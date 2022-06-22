@@ -34,6 +34,11 @@ public class BooleanTypeHandler extends BaseTypeHandler<Boolean> {
   @Override
   public Boolean getNullableResult(ResultSet rs, String columnName)
       throws SQLException {
+    // rs.wasNull()
+    // 报告最后读取的列是否具有 SQL NULL 。请注意，您必须首先对列调用其中一个 getter 方法以尝试读取其值，然后调用方法wasNull以查看读取的值是否为 SQL NULL 。
+    // return：true 最后读取的列值是 SQL NULL ，则为false
+
+
     boolean result = rs.getBoolean(columnName);
     return !result && rs.wasNull() ? null : result;
   }

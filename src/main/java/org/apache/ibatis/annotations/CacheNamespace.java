@@ -15,15 +15,11 @@
  */
 package org.apache.ibatis.annotations;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
 import org.apache.ibatis.cache.Cache;
 import org.apache.ibatis.cache.decorators.LruCache;
 import org.apache.ibatis.cache.impl.PerpetualCache;
+
+import java.lang.annotation.*;
 
 /**
  * @author Clinton Begin
@@ -33,17 +29,20 @@ import org.apache.ibatis.cache.impl.PerpetualCache;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface CacheNamespace {
-  Class<? extends Cache> implementation() default PerpetualCache.class;
+  // 类级别的注解
+  // 用来开启某个Mapper接口下的二级缓存
 
-  Class<? extends Cache> eviction() default LruCache.class;
+  Class<? extends Cache> implementation() default PerpetualCache.class; // 使用的缓存
 
-  long flushInterval() default 0;
+  Class<? extends Cache> eviction() default LruCache.class; // 驱除策略
 
-  int size() default 1024;
+  long flushInterval() default 0; // 刷新间隔
 
-  boolean readWrite() default true;
+  int size() default 1024; // 大小
 
-  boolean blocking() default false;
+  boolean readWrite() default true; // 是否只读
+
+  boolean blocking() default false; // 是否阻塞
 
   /**
    * Property values for a implementation object.

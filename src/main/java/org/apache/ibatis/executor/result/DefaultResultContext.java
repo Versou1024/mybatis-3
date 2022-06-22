@@ -23,6 +23,7 @@ import org.apache.ibatis.session.ResultContext;
 public class DefaultResultContext<T> implements ResultContext<T> {
 
   private T resultObject;
+  // 当前处理的ResultSet的行数 -- 不能超过limit
   private int resultCount;
   private boolean stopped;
 

@@ -28,5 +28,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface ResultMap {
+  // 引用当前类其他方法的中的@Results的id为当前value的数据作为ResultMap
   String[] value();
 }

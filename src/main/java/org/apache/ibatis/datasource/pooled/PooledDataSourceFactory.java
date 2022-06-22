@@ -21,8 +21,10 @@ import org.apache.ibatis.datasource.unpooled.UnpooledDataSourceFactory;
  * @author Clinton Begin
  */
 public class PooledDataSourceFactory extends UnpooledDataSourceFactory {
+  // 一般使用 PooledDataSourceFactory 比较多
 
   public PooledDataSourceFactory() {
+    // 构造器创建的dataSource是PooledDataSource
     this.dataSource = new PooledDataSource();
   }
 

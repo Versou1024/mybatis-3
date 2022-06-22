@@ -25,8 +25,12 @@ import org.apache.ibatis.session.Configuration;
  */
 public class ParameterMap {
 
+  // ParameterMap 属性引用的id
+  // 或 ParameterType 属性的值 + "-Inline" 作为id
   private String id;
+  // 归属类型
   private Class<?> type;
+  // 集合
   private List<ParameterMapping> parameterMappings;
 
   private ParameterMap() {

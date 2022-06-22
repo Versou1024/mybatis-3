@@ -15,13 +15,13 @@
  */
 package org.apache.ibatis.scripting.xmltags;
 
+import org.apache.ibatis.builder.BuilderException;
+
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import org.apache.ibatis.builder.BuilderException;
 
 /**
  * @author Clinton Begin
@@ -40,13 +40,16 @@ public class ExpressionEvaluator {
   }
 
   public Iterable<?> evaluateIterable(String expression, Object parameterObject) {
+    // 0. 使用Ognl解析表达expression
     Object value = OgnlCache.getValue(expression, parameterObject);
     if (value == null) {
       throw new BuilderException("The expression '" + expression + "' evaluated to a null value.");
     }
+    // 1. 集合就直接返回
     if (value instanceof Iterable) {
       return (Iterable<?>) value;
     }
+    // 2. 数组需要构建为list后返回
     if (value.getClass().isArray()) {
       // the array may be primitive, so Arrays.asList() may throw
       // a ClassCastException (issue 209).  Do the work manually
@@ -59,6 +62,10 @@ public class ExpressionEvaluator {
       }
       return answer;
     }
+    // 3. expression的引用对象是HashMap时,直接作为 entrySet 返回
+    // 因此在foreach标签中,collection属性为HashMap的对象时
+    // item 就是 Map.Entry.getKey 对象
+    // index 就是 Map.Entry.getValue 对象
     if (value instanceof Map) {
       return ((Map) value).entrySet();
     }

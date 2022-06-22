@@ -15,11 +15,6 @@
  */
 package org.apache.ibatis.builder;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.regex.Pattern;
-
 import org.apache.ibatis.mapping.ParameterMode;
 import org.apache.ibatis.mapping.ResultSetType;
 import org.apache.ibatis.session.Configuration;
@@ -28,12 +23,25 @@ import org.apache.ibatis.type.TypeAliasRegistry;
 import org.apache.ibatis.type.TypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.regex.Pattern;
+
 /**
  * @author Clinton Begin
  */
 public abstract class BaseBuilder {
+  // ❗️❗️❗️通过对xml文件解析后将得到一个输出即Configuration
+  // 封装各种Mybatis的核心配置信息哦
   protected final Configuration configuration;
+
+  // ❗❗❗
+  // 类型别名的注册中心
   protected final TypeAliasRegistry typeAliasRegistry;
+
+  // ❗❗❗
+  // 类型转换器的注册中心
   protected final TypeHandlerRegistry typeHandlerRegistry;
 
   public BaseBuilder(Configuration configuration) {
@@ -109,6 +117,10 @@ public abstract class BaseBuilder {
   }
 
   protected <T> Class<? extends T> resolveClass(String alias) {
+    // 就是根据 typeAliasRegistry 查找对应alias的Class
+    // 提供给 mybatis.xml 配置时使用简写的名字
+    // 比如 <transactionManager type="JDBC"/> 就会根据 JDBC 找到
+
     if (alias == null) {
       return null;
     }
@@ -133,6 +145,9 @@ public abstract class BaseBuilder {
   }
 
   protected TypeHandler<?> resolveTypeHandler(Class<?> javaType, Class<? extends TypeHandler<?>> typeHandlerType) {
+    // 检查 typeHandlerRegistry 是否对应的typeHandlerType,有的话就使用对应的Handler返回
+    // 没有的话,就根据JavaType去typeHandlerRegistry查找可用的TypeHandler
+
     if (typeHandlerType == null) {
       return null;
     }

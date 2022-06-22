@@ -15,19 +15,22 @@
  */
 package org.apache.ibatis.mapping;
 
-import javax.sql.DataSource;
-
 import org.apache.ibatis.transaction.TransactionFactory;
+
+import javax.sql.DataSource;
 
 /**
  * @author Clinton Begin
  */
 public final class Environment {
-  private final String id;
+  // 最重要的是 -- 持有当前环境的数据库连接信息即DataSource
+
+  private final String id; // 环境id,一般可以是dev/qa/pre/prd等环境
   private final TransactionFactory transactionFactory;
-  private final DataSource dataSource;
+  private final DataSource dataSource; // 对应环境的连接库信息
 
   public Environment(String id, TransactionFactory transactionFactory, DataSource dataSource) {
+    // 唯一构造函数
     if (id == null) {
       throw new IllegalArgumentException("Parameter 'id' must not be null");
     }
@@ -42,6 +45,7 @@ public final class Environment {
     this.dataSource = dataSource;
   }
 
+  // 建造器模式
   public static class Builder {
     private String id;
     private TransactionFactory transactionFactory;

@@ -25,8 +25,13 @@ import java.sql.SQLException;
  */
 public interface ParameterHandler {
 
+  // 获取形参参数 -- 这个形参参数是经过处理的
+  // 比如
+  // mapper的method有多个参数转为mapper结构
+  // 单个参数且无@Param就是那个单个参数的对虾干
   Object getParameterObject();
 
+  // 可以向 PreparedStatement 中设置参数
   void setParameters(PreparedStatement ps)
       throws SQLException;
 

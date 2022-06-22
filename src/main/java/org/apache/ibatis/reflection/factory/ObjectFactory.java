@@ -24,6 +24,8 @@ import java.util.Properties;
  * @author Clinton Begin
  */
 public interface ObjectFactory {
+  // 用来创建Object对象的工厂 -- 使用反射
+  // 唯一内置实现类: DefaultObjectFactory
 
   /**
    * Sets configuration properties.

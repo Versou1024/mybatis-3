@@ -34,14 +34,17 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface CacheNamespaceRef {
 
+  // 和其他mapper的CacheName共用一个二级缓存
+  // 参照另外一个命名空间的缓存来使用。属性有：value, name。如果你使用了这个注解，你应设置 value 或者 name 属性的其中一个。value 属性用于指定 Java 类型而指定命名空间（命名空间名就是指定的 Java 类型的全限定名），name 属性（这个属性仅在MyBatis 3.4.2以上版本生效）直接指定了命名空间的名字。
+
   /**
    * A namespace type to reference a cache (the namespace name become a FQCN of specified type).
    */
-  Class<?> value() default void.class;
+  Class<?> value() default void.class; // 引用缓存的命名空间类型
 
   /**
    * A namespace name to reference a cache.
    * @since 3.4.2
    */
-  String name() default "";
+  String name() default ""; // 引用缓存的命名空间名称。
 }

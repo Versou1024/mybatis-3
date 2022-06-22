@@ -26,6 +26,7 @@ import java.time.LocalTime;
  * @author Tomas Rohovsky
  */
 public class LocalTimeTypeHandler extends BaseTypeHandler<LocalTime> {
+  // 支持 LocalTime
 
   @Override
   public void setNonNullParameter(PreparedStatement ps, int i, LocalTime parameter, JdbcType jdbcType)

@@ -25,6 +25,8 @@ import java.util.Set;
  * @author Clinton Begin
  */
 public class SimpleTypeRegistry {
+  // 简单类型注册表
+  // 包括String\Byte\Shorty\Character\Integer\Long\Float\Double\Boolean\Date\Class\BigInteger\BigDecimal
 
   private static final Set<Class<?>> SIMPLE_TYPE_SET = new HashSet<>();
 

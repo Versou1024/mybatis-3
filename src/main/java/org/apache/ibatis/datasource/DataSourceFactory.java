@@ -23,6 +23,8 @@ import javax.sql.DataSource;
  */
 public interface DataSourceFactory {
 
+  // 一般都是设置 driver/url/username/password 等基本信息
+  // 然后就可以获取一个DataSource啦
   void setProperties(Properties props);
 
   DataSource getDataSource();

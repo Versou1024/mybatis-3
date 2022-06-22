@@ -15,10 +15,10 @@
  */
 package org.apache.ibatis.cache.decorators;
 
+import org.apache.ibatis.cache.Cache;
+
 import java.util.Deque;
 import java.util.LinkedList;
-
-import org.apache.ibatis.cache.Cache;
 
 /**
  * FIFO (first in, first out) cache decorator.
@@ -26,14 +26,20 @@ import org.apache.ibatis.cache.Cache;
  * @author Clinton Begin
  */
 public class FifoCache implements Cache {
+  // 先进先出的Cache缓存
+  // 驱除策略型的Cache -- 需要在@CacheNamespace或<cache>标签中通过eviction属性来指定
+  // 还有一个LruCache也是通过上面来指定的
 
+  // 代理模式
   private final Cache delegate;
+  // 用于保存cacheKey的先后顺序
   private final Deque<Object> keyList;
   private int size;
 
   public FifoCache(Cache delegate) {
     this.delegate = delegate;
     this.keyList = new LinkedList<>();
+    // 默认是1025个
     this.size = 1024;
   }
 
@@ -53,7 +59,9 @@ public class FifoCache implements Cache {
 
   @Override
   public void putObject(Object key, Object value) {
+    // 1. 是否需要FIFO
     cycleKeyList(key);
+    // 2. 然后再存入元素
     delegate.putObject(key, value);
   }
 
@@ -74,11 +82,19 @@ public class FifoCache implements Cache {
   }
 
   private void cycleKeyList(Object key) {
+    // ❗️❗️❗️
+
+    // 1. 向keyList尾部添加key -- 注意是添加到Last上
     keyList.addLast(key);
+    // 2. 如果添加后,超过委托对象的size,就需要从keyList中移除第一个[先进先出原则]
+    // 然后从delegate中移除这个对象
     if (keyList.size() > size) {
       Object oldestKey = keyList.removeFirst();
       delegate.removeObject(oldestKey);
     }
+    // 3. 显而易见
+    // 实际的key和value是存储在delegate中
+    // fifoCache只是确定FIFO的key的list集合
   }
 
 }

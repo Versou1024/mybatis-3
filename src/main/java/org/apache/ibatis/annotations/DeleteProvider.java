@@ -28,6 +28,8 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface DeleteProvider {
+  // value和type只需要指定一个
+  // method指定需要使用的方法
 
   /**
    * Specify a type that implements an SQL provider method.

@@ -15,14 +15,14 @@
  */
 package org.apache.ibatis.annotations;
 
+import org.apache.ibatis.type.JdbcType;
+import org.apache.ibatis.type.TypeHandler;
+import org.apache.ibatis.type.UnknownTypeHandler;
+
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-
-import org.apache.ibatis.type.JdbcType;
-import org.apache.ibatis.type.TypeHandler;
-import org.apache.ibatis.type.UnknownTypeHandler;
 
 /**
  * @author Clinton Begin
@@ -31,24 +31,29 @@ import org.apache.ibatis.type.UnknownTypeHandler;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({})
 public @interface Arg {
-  boolean id() default false;
 
-  String column() default "";
+  // 构造结果期ResultMap时,可以使用构造器来构造
+  // 单参数构造方法，是 ConstructorArgs 集合的一部分。属性有：id, column, javaType, jdbcType, typeHandler, select 和 resultMap。
+  // id 属性是布尔值，来标识用于比较的属性，和<idArg> XML 元素相似。
 
-  Class<?> javaType() default void.class;
+  boolean id() default false; // 是否为id主键列
 
-  JdbcType jdbcType() default JdbcType.UNDEFINED;
+  String column() default ""; // 列名
 
-  Class<? extends TypeHandler> typeHandler() default UnknownTypeHandler.class;
+  Class<?> javaType() default void.class; // java类型 -- 形参类型
+
+  JdbcType jdbcType() default JdbcType.UNDEFINED; // jdbc类型 -- 列的jdbc类型
+
+  Class<? extends TypeHandler> typeHandler() default UnknownTypeHandler.class; // 转换器
 
   String select() default "";
 
   String resultMap() default "";
 
-  String name() default "";
+  String name() default ""; // 对应的形参名
 
   /**
    * @since 3.5.0
    */
-  String columnPrefix() default "";
+  String columnPrefix() default ""; // 在相同时添加的列前缀
 }

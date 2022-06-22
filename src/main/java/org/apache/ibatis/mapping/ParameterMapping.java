@@ -15,27 +15,30 @@
  */
 package org.apache.ibatis.mapping;
 
-import java.sql.ResultSet;
-
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 
+import java.sql.ResultSet;
+
 /**
  * @author Clinton Begin
  */
 public class ParameterMapping {
+  // 1. 用处一: 存储#{}占位符中的表达式信息 -> 也就是#{}的信息被替换为?后,相关信息都存在ParameterMapping中啦
 
   private Configuration configuration;
 
+  // 1. #{} 占位符的属性名
   private String property;
   private ParameterMode mode;
   private Class<?> javaType = Object.class;
   private JdbcType jdbcType;
   private Integer numericScale;
+  // 注意 每个占位符#{} 对应的TypeHandler已经提前解析存放好啦
   private TypeHandler<?> typeHandler;
-  private String resultMapId;
+  private String resultMapId; // 引用的ResultMap的id
   private String jdbcTypeName;
   private String expression;
 
@@ -100,6 +103,8 @@ public class ParameterMapping {
     }
 
     public ParameterMapping build() {
+      // ❗️❗️❗️
+      // ParameterMapping.Builder.build() -- 即使没有指定TypeHandler,这里也会为其创建一个TypeHandler哦
       resolveTypeHandler();
       validate();
       return parameterMapping;
@@ -122,9 +127,18 @@ public class ParameterMapping {
     }
 
     private void resolveTypeHandler() {
+      // ❗️❗️❗️
+      // 前提是 -- typeHandler为null,而javaType不为空 [JavaType在SqlSourceBuilder.ParameterMappingTokenHandler.buildParameterMapping()一般都会解析出JavaType哦]
+      // 去TypeHandler注册总磷, 根据 JavaType 和 jdbcType 查找 TypeHandler哦
+      // 需要知道的是 --
+      // javaType 的来源
+      // 1. 多参数情况基本都是 Object.class -- 一般都是找到UnknownTypeHandler
+      // 2. 单参数且无@Param情况下基本都是 对应的形参的class -- 只有基本如String\Date\Time\Boolean\Int等等基本类型有对应的TypeHandler进行处理哦
+      // 3. 或 #{person,javaType=Xxx} 指定javaType
       if (parameterMapping.typeHandler == null && parameterMapping.javaType != null) {
         Configuration configuration = parameterMapping.configuration;
         TypeHandlerRegistry typeHandlerRegistry = configuration.getTypeHandlerRegistry();
+        // jdbcType需要用户指定,但是一般情况都不会指定JdbcType都是为null值
         parameterMapping.typeHandler = typeHandlerRegistry.getTypeHandler(parameterMapping.javaType, parameterMapping.jdbcType);
       }
     }

@@ -26,10 +26,18 @@ import java.lang.reflect.Type;
  * @author Simone Tripodi
  */
 public abstract class TypeReference<T> {
+  // 由于单个泛型比如 Person<Age>.class 是无法获取到泛型信息
+  // 但是可以通过超类来获取泛型信息
+  // 比如做一个类 AClass extends TypeReference<Person<Age>>
+  // 通过 ((ParameterizedType)AClass.getGenericSuperclass()).getActualTypeArguments()[0] 就可以获取泛型的Type的 Person<Age>
+
+  // 因此这就是为什么经常使用并创建匿名对象的原因 -- 这就是相当于上面的把TypeReference作为超类的一个匿名类哦
+  // new TypeReference<Person<Age>>(){}
 
   private final Type rawType;
 
   protected TypeReference() {
+    // 作为超类时 -- 会解析处 rawType
     rawType = getSuperclassTypeParameter(getClass());
   }
 

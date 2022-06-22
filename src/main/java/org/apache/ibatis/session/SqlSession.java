@@ -15,13 +15,13 @@
  */
 package org.apache.ibatis.session;
 
+import org.apache.ibatis.cursor.Cursor;
+import org.apache.ibatis.executor.BatchResult;
+
 import java.io.Closeable;
 import java.sql.Connection;
 import java.util.List;
 import java.util.Map;
-
-import org.apache.ibatis.cursor.Cursor;
-import org.apache.ibatis.executor.BatchResult;
 
 /**
  * The primary Java interface for working with MyBatis.
@@ -30,6 +30,12 @@ import org.apache.ibatis.executor.BatchResult;
  * @author Clinton Begin
  */
 public interface SqlSession extends Closeable {
+  // 使用 MyBatis 的主要 Java 接口。通过此接口，您可以执行命令、获取映射器和管理事务
+  // 形参中的statement为Statement的Id
+  // 需要去Configuration中根据StatementId查找MappedStatement
+  // 实现类:
+  //    DefaultSqLSession
+  //    SqLSessionManager
 
   /**
    * Retrieve a single row mapped from the statement key.

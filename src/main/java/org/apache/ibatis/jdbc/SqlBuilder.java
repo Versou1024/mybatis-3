@@ -21,6 +21,7 @@ package org.apache.ibatis.jdbc;
  * @author Jeff Butler
  */
 public class SqlBuilder {
+  // 已废弃的SQL Class -- 用来
 
   private static final ThreadLocal<SQL> localSQL = new ThreadLocal<>();
 

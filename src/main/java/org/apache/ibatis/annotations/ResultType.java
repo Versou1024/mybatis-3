@@ -34,5 +34,11 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface ResultType {
+  // 此注解在使用了结果处理器的情况下使用。
+  // 在这种情况下，返回类型为 void，所以 Mybatis 必须有一种方式决定对象的类型，用于构造每行数据。
+  // 如果有 XML 的结果映射，请使用 @ResultMap 注解。
+  // 如果结果类型在 XML 的 <select> 节点中指定了，就不需要其他的注解了。
+  // 其他情况下则使用此注解。
+  // 比如，如果 @Select 注解在一个将使用结果处理器的方法上，那么返回类型必须是 void 并且这个注解（或者@ResultMap）必选。这个注解仅在方法返回类型是 void 的情况下生效。
   Class<?> value();
 }

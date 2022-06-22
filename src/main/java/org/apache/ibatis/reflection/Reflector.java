@@ -15,6 +15,12 @@
  */
 package org.apache.ibatis.reflection;
 
+import org.apache.ibatis.reflection.invoker.GetFieldInvoker;
+import org.apache.ibatis.reflection.invoker.Invoker;
+import org.apache.ibatis.reflection.invoker.MethodInvoker;
+import org.apache.ibatis.reflection.invoker.SetFieldInvoker;
+import org.apache.ibatis.reflection.property.PropertyNamer;
+
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -33,12 +39,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.ibatis.reflection.invoker.GetFieldInvoker;
-import org.apache.ibatis.reflection.invoker.Invoker;
-import org.apache.ibatis.reflection.invoker.MethodInvoker;
-import org.apache.ibatis.reflection.invoker.SetFieldInvoker;
-import org.apache.ibatis.reflection.property.PropertyNamer;
-
 /**
  * This class represents a cached set of class definition information that
  * allows for easy mapping between property names and getter/setter methods.
@@ -46,20 +46,32 @@ import org.apache.ibatis.reflection.property.PropertyNamer;
  * @author Clinton Begin
  */
 public class Reflector {
+  // 此类表示一组[[缓存]]的类定义信息，允许在属性名称和 getter/setter 方法之间轻松映射。
+  // 核心就是 -- 缓存有效数据
 
+  // 目标类
   private final Class<?> type;
+  // 可读的属性名
   private final String[] readablePropertyNames;
+  // 可写的属性名
   private final String[] writablePropertyNames;
+  // set方法
   private final Map<String, Invoker> setMethods = new HashMap<>();
+  // get方法
   private final Map<String, Invoker> getMethods = new HashMap<>();
+  // set的形参类型
   private final Map<String, Class<?>> setTypes = new HashMap<>();
+  // get的形参类型
   private final Map<String, Class<?>> getTypes = new HashMap<>();
+  // 默认的构造器 -- 即空参构造器
   private Constructor<?> defaultConstructor;
 
   private Map<String, String> caseInsensitivePropertyMap = new HashMap<>();
 
   public Reflector(Class<?> clazz) {
+    // 唯一构造器
     type = clazz;
+    // 添加默认构造器
     addDefaultConstructor(clazz);
     addGetMethods(clazz);
     addSetMethods(clazz);
@@ -81,8 +93,14 @@ public class Reflector {
   }
 
   private void addGetMethods(Class<?> clazz) {
+    // key->方法名,value->方法
+    // 如果如果有两个方法比如 getName和isName 那么他们都是同一个key即name,而value的集合就是这两个方法哦
     Map<String, List<Method>> conflictingGetters = new HashMap<>();
+    // 0. 获取类/超类/接口中的所有方法,包括private修饰的
     Method[] methods = getClassMethods(clazz);
+    // 1. 将所有的get method进行过滤出来,
+    // get方法的标准: 无形参 - 方法名以get或is开头
+    // 过滤后继续遍历处理 -> 存储到conflictingGetters中
     Arrays.stream(methods).filter(m -> m.getParameterTypes().length == 0 && PropertyNamer.isGetter(m.getName()))
       .forEach(m -> addMethodConflict(conflictingGetters, PropertyNamer.methodToProperty(m.getName()), m));
     resolveGetterConflicts(conflictingGetters);
@@ -132,6 +150,7 @@ public class Reflector {
   }
 
   private void addSetMethods(Class<?> clazz) {
+    // 类似 addGetMethods() 的处理 - 不做阐述
     Map<String, List<Method>> conflictingSetters = new HashMap<>();
     Method[] methods = getClassMethods(clazz);
     Arrays.stream(methods).filter(m -> m.getParameterTypes().length == 1 && PropertyNamer.isSetter(m.getName()))
@@ -272,16 +291,20 @@ public class Reflector {
   private Method[] getClassMethods(Class<?> clazz) {
     Map<String, Method> uniqueMethods = new HashMap<>();
     Class<?> currentClass = clazz;
+    // 递归 -- 直到为Object.class
     while (currentClass != null && currentClass != Object.class) {
+      // 对每个 currentClass 获取其中声明的所有方法 -- 包括 private 的
       addUniqueMethods(uniqueMethods, currentClass.getDeclaredMethods());
 
       // we also need to look for interface methods -
       // because the class may be abstract
       Class<?>[] interfaces = currentClass.getInterfaces();
       for (Class<?> anInterface : interfaces) {
+        // 接口中的方法 -- 也需要获取出来哦
         addUniqueMethods(uniqueMethods, anInterface.getMethods());
       }
 
+      // 超类的方法也需要获取出来哦
       currentClass = currentClass.getSuperclass();
     }
 

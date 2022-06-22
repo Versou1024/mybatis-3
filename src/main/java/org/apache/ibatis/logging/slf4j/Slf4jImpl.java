@@ -26,10 +26,12 @@ import org.slf4j.spi.LocationAwareLogger;
  * @author Eduardo Macarron
  */
 public class Slf4jImpl implements Log {
+  // Slf4j的日志实现
 
   private Log log;
 
   public Slf4jImpl(String clazz) {
+    // 使用的是 org.slf4j.LoggerFactory 创建 Logger
     Logger logger = LoggerFactory.getLogger(clazz);
 
     if (logger instanceof LocationAwareLogger) {

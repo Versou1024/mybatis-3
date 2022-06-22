@@ -31,4 +31,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.CONSTRUCTOR})
 public @interface AutomapConstructor {
+  // 自动映射到构造器上
 }

@@ -24,6 +24,7 @@ import java.sql.SQLException;
  * @author Clinton Begin
  */
 public class FloatTypeHandler extends BaseTypeHandler<Float> {
+  // 支持 Float
 
   @Override
   public void setNonNullParameter(PreparedStatement ps, int i, Float parameter, JdbcType jdbcType)

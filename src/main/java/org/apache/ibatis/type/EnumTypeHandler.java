@@ -24,6 +24,9 @@ import java.sql.SQLException;
  * @author Clinton Begin
  */
 public class EnumTypeHandler<E extends Enum<E>> extends BaseTypeHandler<E> {
+  // 相比于EnumOrdinalTypeHandler
+  // 使用的enum.name()名字作为来存储
+  // 查询返回时根据Enum.valueOf(type,name)进行查询
 
   private final Class<E> type;
 

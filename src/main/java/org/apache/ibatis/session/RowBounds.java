@@ -19,6 +19,7 @@ package org.apache.ibatis.session;
  * @author Clinton Begin
  */
 public class RowBounds {
+  // 行边界 -- 即 sql 语句中的 offset 和 limit
 
   public static final int NO_ROW_OFFSET = 0;
   public static final int NO_ROW_LIMIT = Integer.MAX_VALUE;

@@ -15,25 +15,25 @@
  */
 package org.apache.ibatis.type;
 
-import java.sql.CallableStatement;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
+import org.apache.ibatis.io.Resources;
+
+import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.apache.ibatis.io.Resources;
 
 /**
  * @author Clinton Begin
  */
 public class UnknownTypeHandler extends BaseTypeHandler<Object> {
+  // 未知类型的TypeHandler
+  // ❗️❗️❗️
 
+  // 用来处理parameter为null时的TypeHandler
   private static final ObjectTypeHandler OBJECT_TYPE_HANDLER = new ObjectTypeHandler();
 
   private TypeHandlerRegistry typeHandlerRegistry;
 
+  // 需要将 typeHandlerRegistry 注册进来
   public UnknownTypeHandler(TypeHandlerRegistry typeHandlerRegistry) {
     this.typeHandlerRegistry = typeHandlerRegistry;
   }
@@ -41,6 +41,9 @@ public class UnknownTypeHandler extends BaseTypeHandler<Object> {
   @Override
   public void setNonNullParameter(PreparedStatement ps, int i, Object parameter, JdbcType jdbcType)
       throws SQLException {
+    // 解析parameter的java类型,然后再去使用javaType和jdbcType去查找使用的TypeHandler
+    // 注意这里的parameter就是要传入PreparedStatement某个?占位符位置的实际值
+    // jdbcType 一般不会指定都是null
     TypeHandler handler = resolveTypeHandler(parameter, jdbcType);
     handler.setParameter(ps, i, parameter, jdbcType);
   }
@@ -69,12 +72,16 @@ public class UnknownTypeHandler extends BaseTypeHandler<Object> {
   }
 
   private TypeHandler<?> resolveTypeHandler(Object parameter, JdbcType jdbcType) {
+    // 根据给定的parameter和jdbcType查找TypeHandler
+
     TypeHandler<?> handler;
     if (parameter == null) {
       handler = OBJECT_TYPE_HANDLER;
     } else {
+      // 1. parameter.getClass()获取即将写入#{}中的parameter的形参 -- 然后根据形参类型和jdbcType去查找handler
       handler = typeHandlerRegistry.getTypeHandler(parameter.getClass(), jdbcType);
       // check if handler is null (issue #270)
+      // 避免递归处理,handler仍然为UnknownTypeHandler需要进行额外处理
       if (handler == null || handler instanceof UnknownTypeHandler) {
         handler = OBJECT_TYPE_HANDLER;
       }
@@ -84,20 +91,25 @@ public class UnknownTypeHandler extends BaseTypeHandler<Object> {
 
   private TypeHandler<?> resolveTypeHandler(ResultSet rs, String column) {
     try {
+      // 0. columnIndexLookup 存储column的列名和列的位置
       Map<String,Integer> columnIndexLookup;
       columnIndexLookup = new HashMap<>();
+      // 1. ResultSet的MetaData
       ResultSetMetaData rsmd = rs.getMetaData();
       int count = rsmd.getColumnCount();
-      for (int i = 1; i <= count; i++) {
+      for (int i = 1; i <= count; i++) { // 注意: i是从1开始的
         String name = rsmd.getColumnName(i);
         columnIndexLookup.put(name,i);
       }
+      // 2. 获取对应的column的columnIndex
       Integer columnIndex = columnIndexLookup.get(column);
       TypeHandler<?> handler = null;
       if (columnIndex != null) {
+        // 2.1
         handler = resolveTypeHandler(rsmd, columnIndex);
       }
       if (handler == null || handler instanceof UnknownTypeHandler) {
+        // 2.2 默认的 ObjectTypeHandler
         handler = OBJECT_TYPE_HANDLER;
       }
       return handler;
@@ -108,6 +120,7 @@ public class UnknownTypeHandler extends BaseTypeHandler<Object> {
 
   private TypeHandler<?> resolveTypeHandler(ResultSetMetaData rsmd, Integer columnIndex) {
     TypeHandler<?> handler = null;
+    // 1. 获取jdbcType/javaType
     JdbcType jdbcType = safeGetJdbcTypeForColumn(rsmd, columnIndex);
     Class<?> javaType = safeGetClassForColumn(rsmd, columnIndex);
     if (javaType != null && jdbcType != null) {
@@ -122,6 +135,7 @@ public class UnknownTypeHandler extends BaseTypeHandler<Object> {
 
   private JdbcType safeGetJdbcTypeForColumn(ResultSetMetaData rsmd, Integer columnIndex) {
     try {
+      // 检索指定列的 SQL 类型。
       return JdbcType.forCode(rsmd.getColumnType(columnIndex));
     } catch (Exception e) {
       return null;
@@ -130,6 +144,7 @@ public class UnknownTypeHandler extends BaseTypeHandler<Object> {
 
   private Class<?> safeGetClassForColumn(ResultSetMetaData rsmd, Integer columnIndex) {
     try {
+      // java类名
       return Resources.classForName(rsmd.getColumnClassName(columnIndex));
     } catch (Exception e) {
       return null;

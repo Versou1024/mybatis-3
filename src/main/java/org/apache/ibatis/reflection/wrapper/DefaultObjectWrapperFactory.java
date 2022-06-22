@@ -22,6 +22,7 @@ import org.apache.ibatis.reflection.ReflectionException;
  * @author Clinton Begin
  */
 public class DefaultObjectWrapperFactory implements ObjectWrapperFactory {
+  // DefaultObjectWrapperFactory 直接报出错误
 
   @Override
   public boolean hasWrapperFor(Object object) {

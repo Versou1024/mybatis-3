@@ -30,9 +30,14 @@ import org.apache.ibatis.session.Configuration;
  * @author Eduardo Macarron
  */
 public class RawLanguageDriver extends XMLLanguageDriver {
+  // 注意继承体系: RawLanguageDriver 继承的 XMLLanguageDriver
 
   @Override
   public SqlSource createSqlSource(Configuration configuration, XNode script, Class<?> parameterType) {
+    // 根据xml的script构建sqlSource
+    // 在 XMLLanguageDriver.createSqlSource(Configuration configuration, String script, Class<?> parameterType)
+    // 提供给一个检查是否为Dynamic的能力
+
     SqlSource source = super.createSqlSource(configuration, script, parameterType);
     checkIsNotDynamic(source);
     return source;
@@ -40,6 +45,10 @@ public class RawLanguageDriver extends XMLLanguageDriver {
 
   @Override
   public SqlSource createSqlSource(Configuration configuration, String script, Class<?> parameterType) {
+    // 根据注解@Select/@Update/@Insert的script构建sqlSource
+    // 在 XMLLanguageDriver.createSqlSource(Configuration configuration, String script, Class<?> parameterType)
+    // 提供给一个检查是否为Dynamic的能力
+
     SqlSource source = super.createSqlSource(configuration, script, parameterType);
     checkIsNotDynamic(source);
     return source;

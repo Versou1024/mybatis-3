@@ -19,5 +19,8 @@ package org.apache.ibatis.mapping;
  * @author Clinton Begin
  */
 public enum SqlCommandType {
+  // sql语句类型
+  // Unknown 表示错误的情况 -- 会提出异常
+  // FLUSH 表示Mapper接口中的方法 -- 仅仅是用来做刷新操作的,不需要执行真的方法
   UNKNOWN, INSERT, UPDATE, DELETE, SELECT, FLUSH;
 }

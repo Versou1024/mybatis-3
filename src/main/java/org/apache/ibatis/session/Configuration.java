@@ -15,18 +15,6 @@
  */
 package org.apache.ibatis.session;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.function.BiFunction;
-
 import org.apache.ibatis.binding.MapperRegistry;
 import org.apache.ibatis.builder.CacheRefResolver;
 import org.apache.ibatis.builder.IncompleteElementException;
@@ -95,41 +83,68 @@ import org.apache.ibatis.type.TypeAliasRegistry;
 import org.apache.ibatis.type.TypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 
+import java.util.*;
+import java.util.function.BiFunction;
+
 /**
  * @author Clinton Begin
  */
 public class Configuration {
+  // ❗️❗️❗️
 
   protected Environment environment;
+
+  // 全局配置 -- 一般是在 mybaits.xml 的 <setting> 标签中配置接口
 
   protected boolean safeRowBoundsEnabled;
   protected boolean safeResultHandlerEnabled = true;
   protected boolean mapUnderscoreToCamelCase;
   protected boolean aggressiveLazyLoading;
   protected boolean multipleResultSetsEnabled = true;
+  // 全局配置是否需要使用生成的key
+  // 如此当<update><insert>标签中没有指定useGeneratedKey属性时,也会默认是true的值
+  // 当配置useGeneratedKeys属性的值为true,以此来获取数据库生成的主键时,我们就需要着手配置keyProperty属性和keyColumn属性了
+  // keyProperty  属性的取值是java对象的属性名,当获取到新增数据记录的主键之后,mybatis会将主键对应的值赋给keyProperty指向的属性,如果有多个属性,可以使用,进行分隔.
+  // keyColumn    属性用于指定当Statement执行完成后,需要返回的数据的数据列名称,如果有多个数据列的话,可以使用,进行分隔.
   protected boolean useGeneratedKeys;
+  // 是否使用列的别名
+  //
   protected boolean useColumnLabel = true;
-  protected boolean cacheEnabled = true;
+  protected boolean cacheEnabled = true; // 默认使用缓存
+  // 在 Null 上调用 Setters
   protected boolean callSettersOnNulls;
+  // 是否使用真实的形参名
+  // 用在解析MapperMethod时没有指定@Param注解,是否需要使用真实的形参名哦
   protected boolean useActualParamName = true;
+  // 返回空行的实例
   protected boolean returnInstanceForEmptyRow;
 
   protected String logPrefix;
   protected Class<? extends Log> logImpl;
   protected Class<? extends VFS> vfsImpl;
   protected LocalCacheScope localCacheScope = LocalCacheScope.SESSION;
+  // 全局配置: 当没有指定JdbcType时,用于如何确定默认的jdbcType
   protected JdbcType jdbcTypeForNull = JdbcType.OTHER;
   protected Set<String> lazyLoadTriggerMethods = new HashSet<>(Arrays.asList("equals", "clone", "hashCode", "toString"));
   protected Integer defaultStatementTimeout;
   protected Integer defaultFetchSize;
   protected ResultSetType defaultResultSetType;
+  // 执行器类型 -- 默认是Simple类型的
   protected ExecutorType defaultExecutorType = ExecutorType.SIMPLE;
+  // 默认的AutoMapping的行为是Partial
   protected AutoMappingBehavior autoMappingBehavior = AutoMappingBehavior.PARTIAL;
   protected AutoMappingUnknownColumnBehavior autoMappingUnknownColumnBehavior = AutoMappingUnknownColumnBehavior.NONE;
 
+  // 解析出 mybatis.xml 中 <properties> 标签的的 resource或url 属性
   protected Properties variables = new Properties();
+  // 用户可通过 <reflectorFactory> 标签设置自定义的reflectorFactory -- 提供根据class做实例化的能力
+  // 默认是 DefaultReflectorFactory
   protected ReflectorFactory reflectorFactory = new DefaultReflectorFactory();
+  // 用户可通过 <objectFactory> 标签设置自定义的ObjectFactory -- 提供根据class做实例化的能力
+  // 默认是 DefaultObjectFactory
   protected ObjectFactory objectFactory = new DefaultObjectFactory();
+  // 用户可通过 <objectWrapperFactory> 标签设置自定义的ObjectWrapperFactory -- 生成ObjectWrapper,提供对目标对象的访问器的访问能力
+  // 默认是 ObjectWrapperFactory
   protected ObjectWrapperFactory objectWrapperFactory = new DefaultObjectWrapperFactory();
 
   protected boolean lazyLoadingEnabled = false;
@@ -144,25 +159,46 @@ public class Configuration {
    */
   protected Class<?> configurationFactory;
 
+  // Mappper 注册表
   protected final MapperRegistry mapperRegistry = new MapperRegistry(this);
+  // 拦截器链 -- 就是管理Interceptor的,遍历管理的Interceptor做拦截interceptor或者做插件扩展plugin()
+  // 将用户在<plugin>标签中定义的Interceptor加入到interceptorChain中
   protected final InterceptorChain interceptorChain = new InterceptorChain();
+  // TypeHandler 注册表
   protected final TypeHandlerRegistry typeHandlerRegistry = new TypeHandlerRegistry();
+  // Type别名 注册表
   protected final TypeAliasRegistry typeAliasRegistry = new TypeAliasRegistry();
+  // LanguageDriver 注册表
   protected final LanguageDriverRegistry languageRegistry = new LanguageDriverRegistry();
 
+  // 存储 MappedStatement: 其中key为insert/update/delete/select的命名空间+id - 也可以是 selectKey标签的命名空间+!selectKey
+  // MappedStatement 就是对应标签生成的MappedStatement
   protected final Map<String, MappedStatement> mappedStatements = new StrictMap<MappedStatement>("Mapped Statements collection")
       .conflictMessageProducer((savedValue, targetValue) ->
           ". please check " + savedValue.getResource() + " and " + targetValue.getResource());
+  // 二级缓存 -- key为namespace,value为对应使用的cache对象
   protected final Map<String, Cache> caches = new StrictMap<>("Caches collection");
+  // ResultMap标签的存储, key-ResultMap标签的id属性,value-ResultMap标签映射为Java对象
   protected final Map<String, ResultMap> resultMaps = new StrictMap<>("Result Maps collection");
+  // ParameterMap标签的存储,key-ParameterMap标签的id属性
   protected final Map<String, ParameterMap> parameterMaps = new StrictMap<>("Parameter Maps collection");
+  // <SelectKey>标签的存储, key-虽然selectKey没有id属性,但是解析过程中会将selectKey的父标签一般是select或update的id取出来,然后带上后缀!selectKey作为这里缓存的key
+  // value -- 就是解析并构造出来的KeyGenerator,一般是其实现类SelectKeyGenerator
   protected final Map<String, KeyGenerator> keyGenerators = new StrictMap<>("Key Generators collection");
 
+  // 标记已经加载解析过的Resource
+  // 三种情况:
+  // 1. MapperAnnotationBuilder 中解析mapper接口的注解,会将其 "class com.sdk.developer.UserMapper" 作为resourceName,表示注解信息被解析完毕
+  // 2. XMLMapperBuilder 中解析mapper接口的mapper.xml文件,会将其 " /com/sdk/developer/UserMapper.xml" 作为resourceName,表示mapper.xml信息被解析完毕
+  // 3. XMLMapperBuilder 中将其 "namespace: com.sdk.developer.UserMapper" 作为中间信息,告诉MapperAnnotationBuilder不需要尝试解析Mapper.xml文件啦
   protected final Set<String> loadedResources = new HashSet<>();
   protected final Map<String, XNode> sqlFragments = new StrictMap<>("XML fragments parsed from previous mappers");
 
+  // 存放未完成的XMLStatementBuilder -- 就暂时存放在这里,后面再去处理吧
   protected final Collection<XMLStatementBuilder> incompleteStatements = new LinkedList<>();
+  // 存放未完成的CacheRefResolver -- 解析器解析到一半发现CacheNamespaceRef的ref引用的cache还没加载,就暂时存放在这里,后面再去处理吧
   protected final Collection<CacheRefResolver> incompleteCacheRefs = new LinkedList<>();
+  // 存放未完成的ResultMapResolver -- 解析器解析到一半发现ResultMap的extend的父ResultMap还没加载,就暂时存放在这里,后面再去处理吧
   protected final Collection<ResultMapResolver> incompleteResultMaps = new LinkedList<>();
   protected final Collection<MethodResolver> incompleteMethods = new LinkedList<>();
 
@@ -171,6 +207,7 @@ public class Configuration {
    * references a cache bound to another namespace and the value is the
    * namespace which the actual cache is bound to.
    */
+  // cacheRef缓存
   protected final Map<String, String> cacheRefMap = new HashMap<>();
 
   public Configuration(Environment environment) {
@@ -179,24 +216,32 @@ public class Configuration {
   }
 
   public Configuration() {
+    // 类型别名注册表
+
+    // 使用的transactionManager -- 两种:JDBC和MANAGED
     typeAliasRegistry.registerAlias("JDBC", JdbcTransactionFactory.class);
     typeAliasRegistry.registerAlias("MANAGED", ManagedTransactionFactory.class);
 
+    // 使用的DateSourceFactory -- 三种:JNDI\POOLED\UNPOOLED
     typeAliasRegistry.registerAlias("JNDI", JndiDataSourceFactory.class);
     typeAliasRegistry.registerAlias("POOLED", PooledDataSourceFactory.class);
     typeAliasRegistry.registerAlias("UNPOOLED", UnpooledDataSourceFactory.class);
 
+    // 使用的缓存Cache -- 五种: PERPRTUAL/FIFO/LRU/SOFT/WEAK
     typeAliasRegistry.registerAlias("PERPETUAL", PerpetualCache.class);
     typeAliasRegistry.registerAlias("FIFO", FifoCache.class);
     typeAliasRegistry.registerAlias("LRU", LruCache.class);
     typeAliasRegistry.registerAlias("SOFT", SoftCache.class);
     typeAliasRegistry.registerAlias("WEAK", WeakCache.class);
 
+    // DataBaseIdProvider的实现类 -- 对应别名为DB_VENDOR
     typeAliasRegistry.registerAlias("DB_VENDOR", VendorDatabaseIdProvider.class);
 
+    // 使用的LanguageDriver -- 两种:XML/RAW
     typeAliasRegistry.registerAlias("XML", XMLLanguageDriver.class);
     typeAliasRegistry.registerAlias("RAW", RawLanguageDriver.class);
 
+    // 使用的日志 -- SLF4J/COMMONS_LOGGING/LOG4J/LOG4J2/JDK_LOGGING/STDOUT_LOGGING/NO_LOGGING
     typeAliasRegistry.registerAlias("SLF4J", Slf4jImpl.class);
     typeAliasRegistry.registerAlias("COMMONS_LOGGING", JakartaCommonsLoggingImpl.class);
     typeAliasRegistry.registerAlias("LOG4J", Log4jImpl.class);
@@ -205,9 +250,13 @@ public class Configuration {
     typeAliasRegistry.registerAlias("STDOUT_LOGGING", StdOutImpl.class);
     typeAliasRegistry.registerAlias("NO_LOGGING", NoLoggingImpl.class);
 
+    // 使用的代理模式 -- 两种: CGLIB/JAVASSIST
     typeAliasRegistry.registerAlias("CGLIB", CglibProxyFactory.class);
     typeAliasRegistry.registerAlias("JAVASSIST", JavassistProxyFactory.class);
 
+    // LanguageDriver 注册表
+    // 两个 Driver -> XMLLanguageDriver/RawLanguageDriver
+    // ❗️❗️❗️ here 这里注册的默认的LanguageDriver是XMLLanguageDriver
     languageRegistry.setDefaultDriverClass(XMLLanguageDriver.class);
     languageRegistry.register(RawLanguageDriver.class);
   }
@@ -557,8 +606,10 @@ public class Configuration {
    */
   public LanguageDriver getLanguageDriver(Class<? extends LanguageDriver> langClass) {
     if (langClass == null) {
+      // 99%的情况,都是获取默认的Driver哦
       return languageRegistry.getDefaultDriver();
     }
+    // 1%的情况,会向languageRegistry中注册langClass
     languageRegistry.register(langClass);
     return languageRegistry.getDriver(langClass);
   }
@@ -575,12 +626,18 @@ public class Configuration {
     return MetaObject.forObject(object, objectFactory, objectWrapperFactory, reflectorFactory);
   }
 
+  // ParameterHandler 对形参注入进行处理
   public ParameterHandler newParameterHandler(MappedStatement mappedStatement, Object parameterObject, BoundSql boundSql) {
+    // 创建一个 ParameterHandler -- 可在此处Debug观察 🇫🇯🇫🇯🇫🇯
     ParameterHandler parameterHandler = mappedStatement.getLang().createParameterHandler(mappedStatement, parameterObject, boundSql);
+    // ❗️❗️❗️ 如果使用interceptorChain进行扩展哦
+    // 就是生成一个代理对象 -- 当前前提是Interceptor对这个parameterHandler的target感兴趣 -- 就可以生成一个代理对昂
+    // 然后后续这个代理对象执行方法时 -- 如果方法满足 @Interceptors@Signature 拦截的切点的定义 -- 就会指定 Interceptor.intercept(Invocation) 即拦截方法
     parameterHandler = (ParameterHandler) interceptorChain.pluginAll(parameterHandler);
     return parameterHandler;
   }
 
+  // ResultSetHandler 对结果返回注入进行处理
   public ResultSetHandler newResultSetHandler(Executor executor, MappedStatement mappedStatement, RowBounds rowBounds, ParameterHandler parameterHandler,
       ResultHandler resultHandler, BoundSql boundSql) {
     ResultSetHandler resultSetHandler = new DefaultResultSetHandler(executor, mappedStatement, parameterHandler, resultHandler, boundSql, rowBounds);
@@ -588,30 +645,41 @@ public class Configuration {
     return resultSetHandler;
   }
 
+  // StatementHandler 对语句构造过程进行处理
   public StatementHandler newStatementHandler(Executor executor, MappedStatement mappedStatement, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {
+    // 创建 StatementHandler -- 默认是创建 RoutingStatementHandler
     StatementHandler statementHandler = new RoutingStatementHandler(executor, mappedStatement, parameterObject, rowBounds, resultHandler, boundSql);
+    // ❗️❗️❗️ 使用插件进行扩展哦 -- 实际就是看是否可以为 statementHandler 创建代理对象拦截其执行
     statementHandler = (StatementHandler) interceptorChain.pluginAll(statementHandler);
     return statementHandler;
   }
 
   public Executor newExecutor(Transaction transaction) {
+    // ❗️❗️❗️ 创建一个执行器
     return newExecutor(transaction, defaultExecutorType);
   }
 
   public Executor newExecutor(Transaction transaction, ExecutorType executorType) {
+    // 指定的executorType优先级 > defaultExecutorType的优先级 > ExecutorType.SIMPLE的优先级
+    // 默认的mybatis.xml中defaultExecutorType就是Simple类型的
     executorType = executorType == null ? defaultExecutorType : executorType;
     executorType = executorType == null ? ExecutorType.SIMPLE : executorType;
     Executor executor;
+    // 1. 批量执行器
     if (ExecutorType.BATCH == executorType) {
       executor = new BatchExecutor(this, transaction);
+      // 2. 可重用执行器
     } else if (ExecutorType.REUSE == executorType) {
       executor = new ReuseExecutor(this, transaction);
     } else {
+      // 3. 简单执行器
       executor = new SimpleExecutor(this, transaction);
     }
     if (cacheEnabled) {
+      // 4. 包装器 -- 提供缓存能力
       executor = new CachingExecutor(executor);
     }
+    // 5. 将各种拦截器插件应用上去 -- 需要用户定制Interceptor,否则是不会生效的哦
     executor = (Executor) interceptorChain.pluginAll(executor);
     return executor;
   }
@@ -658,7 +726,10 @@ public class Configuration {
 
   public void addResultMap(ResultMap rm) {
     resultMaps.put(rm.getId(), rm);
+    // 在本地检查有Discrimination的嵌套结果映射
+    // 主要就是检查 <discriminator>子标签<case>中的resultMap属性是否已经被加载 -- 局部检查就是从 ResultMap 本身检查
     checkLocallyForDiscriminatedNestedResultMaps(rm);
+    // 在全局检查 <discriminator>子标签<case>中的resultMap属性是否已经被加载 -- 全局检查就是从缓存的 Configuration.resultMaps 检查
     checkGloballyForDiscriminatedNestedResultMaps(rm);
   }
 
@@ -762,6 +833,8 @@ public class Configuration {
   public void addInterceptor(Interceptor interceptor) {
     interceptorChain.addInterceptor(interceptor);
   }
+
+  // MapperRegistry相关的 添加Mappers\检查是否有Mapper\获取指定Mapper
 
   public void addMappers(String packageName, Class<?> superType) {
     mapperRegistry.addMappers(packageName, superType);

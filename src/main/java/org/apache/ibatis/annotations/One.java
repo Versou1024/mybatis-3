@@ -29,8 +29,11 @@ import org.apache.ibatis.mapping.FetchType;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({})
 public @interface One {
+  // one的来源 -- 指定select语句
+
   String select() default "";
 
+  // 可以指定加载模式 -- Lazy\Eager\Default
   FetchType fetchType() default FetchType.DEFAULT;
 
 }

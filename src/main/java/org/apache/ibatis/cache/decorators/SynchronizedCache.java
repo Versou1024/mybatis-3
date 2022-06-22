@@ -21,6 +21,8 @@ import org.apache.ibatis.cache.Cache;
  * @author Clinton Begin
  */
 public class SynchronizedCache implements Cache {
+  // 常用装饰器 -- 该装饰器将默认在 CacheBuilder.setStandardDecorators() 作为默认装饰器使用
+  // 给所有方法加上Synchronized关键字即可 -- 保证同步
 
   private final Cache delegate;
 

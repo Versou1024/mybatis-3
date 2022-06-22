@@ -28,38 +28,39 @@ import java.util.List;
  */
 public abstract class AbstractSQL<T> {
 
-  private static final String AND = ") \nAND (";
-  private static final String OR = ") \nOR (";
+  private static final String AND = ") \nAND ("; // and 符号
+  private static final String OR = ") \nOR ("; // or 符号
 
   private final SQLStatement sql = new SQLStatement();
 
   public abstract T getSelf();
 
+  // 更新的表
   public T UPDATE(String table) {
     sql().statementType = SQLStatement.StatementType.UPDATE;
     sql().tables.add(table);
     return getSelf();
   }
 
+  // 更新时设置的列名
   public T SET(String sets) {
     sql().sets.add(sets);
     return getSelf();
   }
 
-  /**
-   * @since 3.4.2
-   */
   public T SET(String... sets) {
     sql().sets.addAll(Arrays.asList(sets));
     return getSelf();
   }
 
+  // 需要插入的表明
   public T INSERT_INTO(String tableName) {
     sql().statementType = SQLStatement.StatementType.INSERT;
     sql().tables.add(tableName);
     return getSelf();
   }
 
+  // 更新时的 set column=value
   public T VALUES(String columns, String values) {
     INTO_COLUMNS(columns);
     INTO_VALUES(values);
@@ -70,6 +71,7 @@ public abstract class AbstractSQL<T> {
    * @since 3.4.2
    */
   public T INTO_COLUMNS(String... columns) {
+    // 加入到columns
     sql().columns.addAll(Arrays.asList(columns));
     return getSelf();
   }
@@ -78,12 +80,15 @@ public abstract class AbstractSQL<T> {
    * @since 3.4.2
    */
   public T INTO_VALUES(String... values) {
+    // 加入到valuesList
     List<String> list = sql().valuesList.get(sql().valuesList.size() - 1);
     for (String value : values) {
       list.add(value);
     }
     return getSelf();
   }
+
+  // select 查询的列名
 
   public T SELECT(String columns) {
     sql().statementType = SQLStatement.StatementType.SELECT;
@@ -99,6 +104,8 @@ public abstract class AbstractSQL<T> {
     sql().select.addAll(Arrays.asList(columns));
     return getSelf();
   }
+
+  // 是否去重
 
   public T SELECT_DISTINCT(String columns) {
     sql().distinct = true;
@@ -215,11 +222,13 @@ public abstract class AbstractSQL<T> {
   }
 
   public T OR() {
+    // 添加 )or( 符号
     sql().lastList.add(OR);
     return getSelf();
   }
 
   public T AND() {
+    // 添加 )and( 符号
     sql().lastList.add(AND);
     return getSelf();
   }
@@ -425,16 +434,21 @@ public abstract class AbstractSQL<T> {
   private static class SQLStatement {
 
     public enum StatementType {
+      // SQL只能是下面一种类型: 删除\插入\查询\更新
       DELETE, INSERT, SELECT, UPDATE
     }
 
     private enum LimitingRowsStrategy {
+      // 偏移量Rows的策略
+
+      // 不追加
       NOP {
         @Override
         protected void appendClause(SafeAppendable builder, String offset, String limit) {
           // NOP
         }
       },
+      //
       ISO {
         @Override
         protected void appendClause(SafeAppendable builder, String offset, String limit) {
@@ -446,6 +460,7 @@ public abstract class AbstractSQL<T> {
           }
         }
       },
+      // 使用 offset_limit,符合 mysql的语法
       OFFSET_LIMIT {
         @Override
         protected void appendClause(SafeAppendable builder, String offset, String limit) {
@@ -462,24 +477,24 @@ public abstract class AbstractSQL<T> {
 
     }
 
-    StatementType statementType;
-    List<String> sets = new ArrayList<>();
-    List<String> select = new ArrayList<>();
-    List<String> tables = new ArrayList<>();
-    List<String> join = new ArrayList<>();
-    List<String> innerJoin = new ArrayList<>();
-    List<String> outerJoin = new ArrayList<>();
-    List<String> leftOuterJoin = new ArrayList<>();
-    List<String> rightOuterJoin = new ArrayList<>();
-    List<String> where = new ArrayList<>();
-    List<String> having = new ArrayList<>();
-    List<String> groupBy = new ArrayList<>();
-    List<String> orderBy = new ArrayList<>();
-    List<String> lastList = new ArrayList<>();
-    List<String> columns = new ArrayList<>();
-    List<List<String>> valuesList = new ArrayList<>();
-    boolean distinct;
-    String offset;
+    StatementType statementType; // 枚举值 -- 指定SQL类型 --  增删改查
+    List<String> sets = new ArrayList<>(); // update 更新时的 sets
+    List<String> select = new ArrayList<>(); // select 指定的列名
+    List<String> tables = new ArrayList<>(); // from 连接的 tables
+    List<String> join = new ArrayList<>();  // join 连接的 tables
+    List<String> innerJoin = new ArrayList<>(); // innerJoin 连接的 tables
+    List<String> outerJoin = new ArrayList<>();  // outerJoin 连接的 tables
+    List<String> leftOuterJoin = new ArrayList<>();  // leftOuterJoin 连接的 tables
+    List<String> rightOuterJoin = new ArrayList<>();  // rightOuterJoin 连接的 tables
+    List<String> where = new ArrayList<>(); // where 连接的条件
+    List<String> having = new ArrayList<>(); // 过滤
+    List<String> groupBy = new ArrayList<>(); // 分组的依据
+    List<String> orderBy = new ArrayList<>(); // 排序的依据
+    List<String> lastList = new ArrayList<>(); //
+    List<String> columns = new ArrayList<>(); // 列
+    List<List<String>> valuesList = new ArrayList<>(); // 列值
+    boolean distinct; // 是否去重
+    String offset; // 偏移量和限制
     String limit;
     LimitingRowsStrategy limitingRowsStrategy = LimitingRowsStrategy.NOP;
 
@@ -488,8 +503,15 @@ public abstract class AbstractSQL<T> {
       valuesList.add(new ArrayList<>());
     }
 
+    // 构建 -- sqlClause
     private void sqlClause(SafeAppendable builder, String keyword, List<String> parts, String open, String close,
                            String conjunction) {
+      // keyword 是关键字 -- 包括 select/select distinct/from/where/group by 等等
+      // 也就是说每一个sql中的子句都需要该方法构建
+      // parts 部分 -- 是本次sql子句中需要添加的部分
+      // open  -- parts还未被追加时就先追加上去
+      // close -- parts全部被追加到budiler后追加上去
+      // conjunction -- 在parts中每个元素被使用后作为分隔符使用
       if (!parts.isEmpty()) {
         if (!builder.isEmpty()) {
           builder.append("\n");
@@ -528,6 +550,7 @@ public abstract class AbstractSQL<T> {
     }
 
     private void joins(SafeAppendable builder) {
+      // 连续构建 - join\innerJoin\outerJoin\leftOuterJoin\rightOuterJoin
       sqlClause(builder, "JOIN", join, "", "", "\nJOIN ");
       sqlClause(builder, "INNER JOIN", innerJoin, "", "", "\nINNER JOIN ");
       sqlClause(builder, "OUTER JOIN", outerJoin, "", "", "\nOUTER JOIN ");
@@ -536,8 +559,13 @@ public abstract class AbstractSQL<T> {
     }
 
     private String insertSQL(SafeAppendable builder) {
+      // 构建插入SQL
+
+      // 1. 构建 insert into
       sqlClause(builder, "INSERT INTO", tables, "", "", "");
+      // 2. 构建 需要插入的columns
       sqlClause(builder, "", columns, "(", ")", ", ");
+      // 3. 构建 Values 部分
       for (int i = 0; i < valuesList.size(); i++) {
         sqlClause(builder, i > 0 ? "," : "VALUES", valuesList.get(i), "(", ")", ", ");
       }
@@ -545,21 +573,34 @@ public abstract class AbstractSQL<T> {
     }
 
     private String deleteSQL(SafeAppendable builder) {
+      // 构建删除的sql
+
+      // 1. 构建 delete from
       sqlClause(builder, "DELETE FROM", tables, "", "", "");
+      // 2. 构建过滤条件 where
       sqlClause(builder, "WHERE", where, "(", ")", " AND ");
+      // 3. 根据 偏移量车路 -- 添加限制
       limitingRowsStrategy.appendClause(builder, null, limit);
       return builder.toString();
     }
 
     private String updateSQL(SafeAppendable builder) {
+      // 构建更新的sql
+
+      // 1. 构建 update 部分
       sqlClause(builder, "UPDATE", tables, "", "", "");
+      // 2. 连接
       joins(builder);
+      // 3. 构建 set 部分
       sqlClause(builder, "SET", sets, "", "", ", ");
+      // 4. 构建 where 部分
       sqlClause(builder, "WHERE", where, "(", ")", " AND ");
+      // 5. 构建 limit 部分
       limitingRowsStrategy.appendClause(builder, null, limit);
       return builder.toString();
     }
 
+    // 返回sql的字符串形式
     public String sql(Appendable a) {
       SafeAppendable builder = new SafeAppendable(a);
       if (statementType == null) {

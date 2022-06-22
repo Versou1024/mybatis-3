@@ -15,6 +15,10 @@
  */
 package org.apache.ibatis.session;
 
+import org.apache.ibatis.cursor.Cursor;
+import org.apache.ibatis.executor.BatchResult;
+import org.apache.ibatis.reflection.ExceptionUtil;
+
 import java.io.InputStream;
 import java.io.Reader;
 import java.lang.reflect.InvocationHandler;
@@ -25,22 +29,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.ibatis.cursor.Cursor;
-import org.apache.ibatis.executor.BatchResult;
-import org.apache.ibatis.reflection.ExceptionUtil;
-
 /**
  * @author Larry Meadors
  */
 public class SqlSessionManager implements SqlSessionFactory, SqlSession {
+  // 装饰器模式 -- 组合被装饰对象SqlSessionFactory
 
   private final SqlSessionFactory sqlSessionFactory;
   private final SqlSession sqlSessionProxy;
 
+  // 线程安全的
   private final ThreadLocal<SqlSession> localSqlSession = new ThreadLocal<>();
 
   private SqlSessionManager(SqlSessionFactory sqlSessionFactory) {
     this.sqlSessionFactory = sqlSessionFactory;
+    // ❗️❗️❗️
+    // 实现了对SqlSession执行过程的拦截器 == SqlSessionInterceptor
     this.sqlSessionProxy = (SqlSession) Proxy.newProxyInstance(
         SqlSessionFactory.class.getClassLoader(),
         new Class[]{SqlSession.class},
@@ -48,6 +52,8 @@ public class SqlSessionManager implements SqlSessionFactory, SqlSession {
   }
 
   public static SqlSessionManager newInstance(Reader reader) {
+    // new SqlSessionFactoryBuilder().build(Reader, Environment, Properties) 创建出来就是 DefaultSqlSessionFactory
+    //
     return new SqlSessionManager(new SqlSessionFactoryBuilder().build(reader, null, null));
   }
 
@@ -111,6 +117,8 @@ public class SqlSessionManager implements SqlSessionFactory, SqlSession {
     return this.localSqlSession.get() != null;
   }
 
+  // SqlSessionFactory 接口下的实现必须委托给 sqlSessionFactory 执行
+
   @Override
   public SqlSession openSession() {
     return sqlSessionFactory.openSession();
@@ -155,6 +163,8 @@ public class SqlSessionManager implements SqlSessionFactory, SqlSession {
   public Configuration getConfiguration() {
     return sqlSessionFactory.getConfiguration();
   }
+
+  // SqlSessionProxy 接口的功能委托给 sqlSessionProxy 实现
 
   @Override
   public <T> T selectOne(String statement) {

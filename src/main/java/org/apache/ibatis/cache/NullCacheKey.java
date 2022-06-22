@@ -26,6 +26,8 @@ public final class NullCacheKey extends CacheKey {
     super();
   }
 
+  // NullCacheKey 不支持 update() 或 updateAll()
+
   @Override
   public void update(Object object) {
     throw new CacheException("Not allowed to update a NullCacheKey instance.");

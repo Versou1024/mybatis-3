@@ -21,6 +21,8 @@ import org.apache.ibatis.cache.Cache;
  * @author Clinton Begin
  */
 public class ScheduledCache implements Cache {
+  // 只读型的Cache -- 需要在@CacheNamespace或<cache>标签中通过onlyRead属性来指定
+
 
   private final Cache delegate;
   protected long clearInterval;

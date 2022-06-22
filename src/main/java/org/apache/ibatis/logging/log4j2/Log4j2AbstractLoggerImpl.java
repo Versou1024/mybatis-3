@@ -29,6 +29,7 @@ import org.apache.logging.log4j.spi.ExtendedLoggerWrapper;
  * @author Eduardo Macarron
  */
 public class Log4j2AbstractLoggerImpl implements Log {
+  // 适配器
 
   private static final Marker MARKER = MarkerManager.getMarker(LogFactory.MARKER);
 

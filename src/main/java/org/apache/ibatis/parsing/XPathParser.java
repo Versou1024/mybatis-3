@@ -15,13 +15,18 @@
  */
 package org.apache.ibatis.parsing;
 
+import org.apache.ibatis.builder.BuilderException;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.*;
+
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-
 import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -29,26 +34,25 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 
-import org.apache.ibatis.builder.BuilderException;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.EntityResolver;
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
-
 /**
  * @author Clinton Begin
  * @author Kazuki Shimizu
  */
 public class XPathParser {
 
+  // Document接口代表整个 HTML 或 XML 文档。从概念上讲，它是文档树的根，提供对文档数据的主要访问。
   private final Document document;
+
   private boolean validation;
+
   private EntityResolver entityResolver;
+
+  // 用户提供的变量 -- 即 mapper_config.xml 中可能存在占位符,需要从用户指定的Properties中加载
+  // 例如 environment标签的 -> dataSource标签的 -> property标签
+  //  <property name="username" value="${username}"/>
+  //  <property name="password" value="${password}"/>
   private Properties variables;
+
   private XPath xpath;
 
   public XPathParser(String xml) {
@@ -123,6 +127,7 @@ public class XPathParser {
 
   public XPathParser(InputStream inputStream, boolean validation, Properties variables, EntityResolver entityResolver) {
     commonConstructor(validation, variables, entityResolver);
+    // 创建 XML 文件对应的 document
     this.document = createDocument(new InputSource(inputStream));
   }
 
@@ -262,6 +267,7 @@ public class XPathParser {
   }
 
   private void commonConstructor(boolean validation, Properties variables, EntityResolver entityResolver) {
+    // 通用构造器
     this.validation = validation;
     this.entityResolver = entityResolver;
     this.variables = variables;

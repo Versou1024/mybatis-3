@@ -21,6 +21,7 @@ import org.apache.ibatis.exceptions.PersistenceException;
  * @author Clinton Begin
  */
 public class TransactionException extends PersistenceException {
+  // Transaction 相关的异常超类
 
   private static final long serialVersionUID = -433589569461084605L;
 

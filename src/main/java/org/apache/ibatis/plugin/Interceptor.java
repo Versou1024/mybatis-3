@@ -21,13 +21,23 @@ import java.util.Properties;
  * @author Clinton Begin
  */
 public interface Interceptor {
+  // 拦截器 Interceptor
+  // 可以通过 plugin() 对 ParameterHandler\ResultHandler\StatementHandler\Executor进行插件扩展
+  // 对执行方法进行拦截intercept()
 
+  // 该接口没有内置实现,完全供用户实现哦
+
+  // 子类必须实现的方法
+  // 对@Interceptor的@Signature表示拦截的方法 -- 进行拦截处理
+  // 需要用户定义增强逻辑
   Object intercept(Invocation invocation) throws Throwable;
 
   default Object plugin(Object target) {
+    // target可以是 ParameterHandler/ResultSetHandler/StatementHandler/Executor 四个对象之一
     return Plugin.wrap(target, this);
   }
 
+  // 用来将解析处的xml文件的属性作为properties设置到当前 Interceptor 的属性上
   default void setProperties(Properties properties) {
     // NOP
   }

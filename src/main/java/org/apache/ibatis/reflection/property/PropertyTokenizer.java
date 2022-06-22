@@ -21,13 +21,30 @@ import java.util.Iterator;
  * @author Clinton Begin
  */
 public class PropertyTokenizer implements Iterator<PropertyTokenizer> {
+  // 属性标记器
+
+  // fullName 以 persons[1].hobbies[2] 为例
+  // indexedName 就是 person[1]
+  // children 就是 hobbies[2]
+  // name 就是 persons
+  // indexed 就是 1
+
+  // fullName 以 persons.hobbies 为例
+  // indexedName 就是 persons
+  // children 就是 hobbies
+  // name 就是 persons
+  // indexed 就是 0
+
+
   private String name;
   private final String indexedName;
   private String index;
   private final String children;
 
   public PropertyTokenizer(String fullname) {
+    // 1. 是否有.分割 比如 person.name
     int delim = fullname.indexOf('.');
+    // 2. 根据是否有属性分割符做判断
     if (delim > -1) {
       name = fullname.substring(0, delim);
       children = fullname.substring(delim + 1);
@@ -36,6 +53,7 @@ public class PropertyTokenizer implements Iterator<PropertyTokenizer> {
       children = null;
     }
     indexedName = name;
+    // 3. 检查是否有[]括起来哦
     delim = name.indexOf('[');
     if (delim > -1) {
       index = name.substring(delim + 1, name.length() - 1);
@@ -61,6 +79,7 @@ public class PropertyTokenizer implements Iterator<PropertyTokenizer> {
 
   @Override
   public boolean hasNext() {
+    // children不为空
     return children != null;
   }
 
