@@ -15,11 +15,6 @@
  */
 package org.apache.ibatis.executor.loader;
 
-import java.sql.SQLException;
-import java.util.List;
-
-import javax.sql.DataSource;
-
 import org.apache.ibatis.cache.CacheKey;
 import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.executor.ExecutorException;
@@ -33,6 +28,10 @@ import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.transaction.Transaction;
 import org.apache.ibatis.transaction.TransactionFactory;
+
+import java.sql.SQLException;
+import java.util.List;
+import javax.sql.DataSource;
 
 /**
  * @author Clinton Begin
@@ -56,28 +55,42 @@ public class ResultLoader {
   public ResultLoader(Configuration config, Executor executor, MappedStatement mappedStatement, Object parameterObject, Class<?> targetType, CacheKey cacheKey, BoundSql boundSql) {
     this.configuration = config;
     this.executor = executor;
+    // 传入的嵌套查询的MappedStatement
     this.mappedStatement = mappedStatement;
+    // 传入嵌套查询的形参对象
     this.parameterObject = parameterObject;
+    // 嵌套查询的结果需要映射为哪种对象
     this.targetType = targetType;
     this.objectFactory = configuration.getObjectFactory();
     this.cacheKey = cacheKey;
+    // 嵌套查询的boundSql
     this.boundSql = boundSql;
+    // 创建的结果提取器
     this.resultExtractor = new ResultExtractor(configuration, objectFactory);
+    // 持有的创建者的线程id
     this.creatorThreadId = Thread.currentThread().getId();
   }
 
   public Object loadResult() throws SQLException {
+    // 1. 执行selectList()
     List<Object> list = selectList();
+    // 2. 提取最终使用的值
     resultObject = resultExtractor.extractObjectFromList(list, targetType);
+    // 3. 返回
     return resultObject;
   }
 
   private <E> List<E> selectList() throws SQLException {
+    // 1. 使用传入的本地Executor
     Executor localExecutor = executor;
+    // 2. 确定执行器:
+    // 当执行loadResult()的线程和持有的创建者线程不是同一个 -- 需要创建新的执行器
     if (Thread.currentThread().getId() != this.creatorThreadId || localExecutor.isClosed()) {
       localExecutor = newExecutor();
     }
     try {
+      // 3. 使用执行器查询
+      // 其中 RowBounds和Executor都是默认选项哦
       return localExecutor.query(mappedStatement, parameterObject, RowBounds.DEFAULT, Executor.NO_RESULT_HANDLER, cacheKey, boundSql);
     } finally {
       if (localExecutor != executor) {
@@ -87,6 +100,10 @@ public class ResultLoader {
   }
 
   private Executor newExecutor() {
+    // 当执行loadResult()的线程和持有的创建者线程不是同一个 -- 需要创建新的执行器
+
+    // 1. 步骤老样子
+    // Environment -> DataSource -> TransactionalFactory -> Transactional -> Executor
     final Environment environment = configuration.getEnvironment();
     if (environment == null) {
       throw new ExecutorException("ResultLoader could not load lazily.  Environment was not configured.");

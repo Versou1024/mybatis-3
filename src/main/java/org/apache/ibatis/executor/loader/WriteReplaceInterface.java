@@ -22,6 +22,8 @@ import java.io.ObjectStreamException;
  */
 public interface WriteReplaceInterface {
 
+  // 无参的writeReplace方法
+  // 在创建代理对象时会被作为Enhancer.setInterface()作为代理类的接口呗实现
   Object writeReplace() throws ObjectStreamException;
 
 }

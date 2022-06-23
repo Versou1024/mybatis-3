@@ -55,6 +55,7 @@ public class MapperMethod {
   private final MethodSignature method;
 
   public MapperMethod(Class<?> mapperInterface, Method method, Configuration config) {
+    // ❗️❗️❗️
     this.command = new SqlCommand(config, mapperInterface, method);
     this.method = new MethodSignature(config, mapperInterface, method);
   }
@@ -91,28 +92,30 @@ public class MapperMethod {
         break;
       }
       case SELECT:
-        // 1. 方法是否为Void并且有ResultHandler参数
+        // 1. 方法是否为Void并且有ResultHandler参数 --
+        // ❗️❗️❗️
+        // ResultHandler生效的地方 -- 因此要想ResultHandler生效--就必须在ResultHandler传递到method的形参上,并且返回值为void才可以
         if (method.returnsVoid() && method.hasResultHandler()) {
           executeWithResultHandler(sqlSession, args);
           result = null;
         }
-        // 2. 方法是否返回的是数组和集合
+        // 2. 方法是否返回的是数组和集合 -- 可以了解❗
         else if (method.returnsMany()) {
-          result = executeForMany(sqlSession, args);
+          result = executeForMany(sqlSession, args); // 最终还是通过selectList完成
         }
-        // 3. 方法是否返回的是Map
+        // 3. 方法是否返回的是Map -- 可以了解❗
         else if (method.returnsMap()) {
-          result = executeForMap(sqlSession, args);
+          result = executeForMap(sqlSession, args); // 最终还是通过selectList完成
         }
         // 4. 方法是否返回的是Cursor
         else if (method.returnsCursor()) {
           result = executeForCursor(sqlSession, args);
         }
-        // 5. 普通的情况
+        // 5. 普通的情况 ❗❗❗
         else {
           Object param = method.convertArgsToSqlCommandParam(args);
           // command.getName() 返回的是 对应的 MappedStatement的id
-          result = sqlSession.selectOne(command.getName(), param);
+          result = sqlSession.selectOne(command.getName(), param); // 最终还是通过selectList完成
           // method返回的是Optional类型时,且result为null或者类型不匹配
           // 那就用Optional.ofNullable(result)包装reuslt吧
           if (method.returnsOptional() && (result == null || !method.getReturnType().equals(result.getClass()))) {
@@ -139,8 +142,9 @@ public class MapperMethod {
   }
 
   private Object rowCountResult(int rowCount) {
-    // 处理 增删改 后的返回数据 -- 即int 型的rowCount
+    // 处理 增删改 后的返回数据 -- 即 int 型的rowCount
     // 如何适配到 method 的返回值类型上
+    // note: 查询的结果是交给DefaultResultSetHandler进行处理
 
     final Object result;
 
@@ -167,15 +171,22 @@ public class MapperMethod {
     return result;
   }
 
+  // ❗️❗️❗️
   private void executeWithResultHandler(SqlSession sqlSession, Object[] args) {
+    // 用于执行: mapper接口中形参中有ResultHandler且返回值为Void的方法
+
+    // 1. 获取待执行的MappedStatement类型的ms
     MappedStatement ms = sqlSession.getConfiguration().getMappedStatement(command.getName());
+    // 2. ms非CALLABLE类型的Statement,并且ms对应的ResultMap的type值为void --- 报错
     if (!StatementType.CALLABLE.equals(ms.getStatementType())
         && void.class.equals(ms.getResultMaps().get(0).getType())) {
       throw new BindingException("method " + command.getName()
           + " needs either a @ResultMap annotation, a @ResultType annotation,"
           + " or a resultType attribute in XML so a ResultHandler can be used as a parameter.");
     }
+    // 3. 将参数args可能的情况下使用ParamMap包装起来
     Object param = method.convertArgsToSqlCommandParam(args);
+    // 4. 是否有使用RowBounds
     if (method.hasRowBounds()) {
       RowBounds rowBounds = method.extractRowBounds(args);
       sqlSession.select(command.getName(), param, rowBounds, method.extractResultHandler(args));
@@ -186,7 +197,9 @@ public class MapperMethod {
 
   private <E> Object executeForMany(SqlSession sqlSession, Object[] args) {
     List<E> result;
+    // 1. 老样子对args在可能的情况下对使用ParamMap进行封装
     Object param = method.convertArgsToSqlCommandParam(args);
+    // 2. 是否有RowBounds
     if (method.hasRowBounds()) {
       RowBounds rowBounds = method.extractRowBounds(args);
       result = sqlSession.selectList(command.getName(), param, rowBounds);
@@ -194,8 +207,10 @@ public class MapperMethod {
       result = sqlSession.selectList(command.getName(), param);
     }
     // issue #510 Collections & arrays support
+    // 3. 集合和数组支持
     if (!method.getReturnType().isAssignableFrom(result.getClass())) {
       if (method.getReturnType().isArray()) {
+        // 将list转为数组
         return convertToArray(result);
       } else {
         return convertToDeclaredCollection(sqlSession.getConfiguration(), result);
@@ -217,6 +232,7 @@ public class MapperMethod {
   }
 
   private <E> Object convertToDeclaredCollection(Configuration config, List<E> list) {
+    // 转换为声明的集合
     Object collection = config.getObjectFactory().create(method.getReturnType());
     MetaObject metaObject = config.newMetaObject(collection);
     metaObject.addAll(list);
@@ -227,19 +243,23 @@ public class MapperMethod {
   private <E> Object convertToArray(List<E> list) {
     Class<?> arrayComponentType = method.getReturnType().getComponentType();
     Object array = Array.newInstance(arrayComponentType, list.size());
+    // 1. mapper接口执行的方法返回值基本类型的数组 --
     if (arrayComponentType.isPrimitive()) {
       for (int i = 0; i < list.size(); i++) {
         Array.set(array, i, list.get(i));
       }
       return array;
     } else {
+      // 2. mapper接口执行的方法返回类型时数组 -- 转换过去即可
       return list.toArray((E[])array);
     }
   }
 
   private <K, V> Map<K, V> executeForMap(SqlSession sqlSession, Object[] args) {
     Map<K, V> result;
+    // 老方法
     Object param = method.convertArgsToSqlCommandParam(args);
+    // 1. 检查方法是偶有RowBounds -- 有的话,获取出来
     if (method.hasRowBounds()) {
       RowBounds rowBounds = method.extractRowBounds(args);
       result = sqlSession.selectMap(command.getName(), param, method.getMapKey(), rowBounds);
@@ -267,7 +287,9 @@ public class MapperMethod {
 
   public static class SqlCommand {
 
-    // mapperMethod对应的mapper.xml标签的id
+    // mapper接口中方法对应的MappedStatement的id
+    // 一般都是 Mapper接口的全限定类型 + "." + Mapper接口下的方法
+    // 等价于: Mapper.xml的命名空间 + "." + DML标签对应的id
     private final String name;
     // sql语句的类型 -- 增删改查
     private final SqlCommandType type;

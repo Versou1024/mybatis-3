@@ -15,22 +15,46 @@
  */
 package org.apache.ibatis.mapping;
 
+import org.apache.ibatis.session.Configuration;
+
 import java.util.Collections;
 import java.util.List;
-
-import org.apache.ibatis.session.Configuration;
 
 /**
  * @author Clinton Begin
  */
 public class ParameterMap {
+  /**
+   *
+   <!ELEMENT parameterMap (parameter+)?>
+   <!ATTLIST parameterMap
+   id CDATA #REQUIRED
+   type CDATA #REQUIRED
+   >
 
-  // ParameterMap 属性引用的id
-  // 或 ParameterType 属性的值 + "-Inline" 作为id
+   <!ELEMENT parameter EMPTY>
+   <!ATTLIST parameter
+   property CDATA #REQUIRED
+   javaType CDATA #IMPLIED
+   jdbcType CDATA #IMPLIED
+   mode (IN | OUT | INOUT) #IMPLIED
+   resultMap CDATA #IMPLIED
+   scale CDATA #IMPLIED
+   typeHandler CDATA #IMPLIED
+   >
+   */
+
+  // ParameterMap 属性引用的id -- 三种情况
+  // 1. DML标签parameterType属性的值 + "-Inline" 作为id
+  // 2. 使用<parameterMap>标签的情况                           -- 该方法基本上已经废弃,被DML标签的parameterType和autoMapping替换掉
+  // 3. 上述两种情况都没有使用时, 其 id = "defaultParameterMap"
   private String id;
-  // 归属类型
+  // 归属类型 -- 对应上述三种情况
+  // 1. 就是DML标签parameterType属性引用的全限定类名
+  // 2. <parameterMap>标签的type属性值的全限定类名
+  // 3. 上述两种情况都没有使用时, type = null
   private Class<?> type;
-  // 集合
+  // <parameterMap>标签下的子标签<parameter>的集合
   private List<ParameterMapping> parameterMappings;
 
   private ParameterMap() {

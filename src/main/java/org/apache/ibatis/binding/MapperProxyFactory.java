@@ -31,7 +31,7 @@ public class MapperProxyFactory<T> {
   // mapper接口的class对象
   private final Class<T> mapperInterface;
 
-  // 由于每次通过是通过newInstance()重新创建的一个Mapper接口的代理对象
+  // 由于每次通过是通过newInstance()重新创建的一个Mapper接口的代理对象 -- [因为每次使用的Sql连接都不是固定,即SqlSeesion是不能和Mapper代理对象绑定的]
   // 那么就需要每次都去解析Mapper接口的方法 -- 通过将 methodCache 传递给 MapperProxy
   // 以此告诉对方将第一个解析出的MapperMethod给缓存起来
   private final Map<Method, MapperMethod> methodCache = new ConcurrentHashMap<>();

@@ -29,6 +29,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface MapKey {
   // 使用在Mapper接口的方法返回为Map<Map的key,PO对象>
-  // 即对返回的Map结构的key执行,使用哪一个列作为Map的key
+  // 确定返回的Map结构的key -- 告诉Mybatis使用哪一个属性作为Map的key
   String value();
 }

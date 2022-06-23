@@ -44,7 +44,7 @@ public class ResultMap {
   private List<ResultMapping> idResultMappings;
   // <ResultMap>的<Constructor>标签下的<idArg>和<arg>标签集合 -- 如果有的话,还将被处理为构造器的形参顺序进行排列
   private List<ResultMapping> constructorResultMappings;
-  // <ResultMap>标签下的<id>和<result>标签集合
+  // <ResultMap>标签下的<id>或<result>或<collection>或<association>标签
   private List<ResultMapping> propertyResultMappings;
   // 映射的列名 column 属性 -- 包括 id/result/collection/association 的普通column属性
   // 而当collection/association标签使用了嵌套查询select属性后 -- column将被作为特殊的属性,形式上为{column1=param1,column2=param2}
@@ -137,7 +137,7 @@ public class ResultMap {
             constructorArgNames.add(resultMapping.getProperty());
           }
         } else {
-          // 3.6 <id>或<result>标签
+          // 3.6 <id>或<result>或<collection>或<association>标签
           resultMap.propertyResultMappings.add(resultMapping);
         }
         // 3.7 id标签或idArg标签

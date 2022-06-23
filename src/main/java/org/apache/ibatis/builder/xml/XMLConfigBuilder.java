@@ -53,6 +53,9 @@ public class XMLConfigBuilder extends BaseBuilder {
   private String environment; // 当前默认的数据库的环境 dev/qa/prd 这种
   private final ReflectorFactory localReflectorFactory = new DefaultReflectorFactory(); // 反射工厂
 
+  // XMLConfigBuilder是对XML格式的Mybatis.xml进行解析
+  // 传递进来的Reader/InputStream都是针对Mybatis.xml
+
   public XMLConfigBuilder(Reader reader) {
     this(reader, null, null);
   }
@@ -322,8 +325,9 @@ public class XMLConfigBuilder extends BaseBuilder {
   }
 
   private void environmentsElement(XNode context) throws Exception {
+    // context 是 Mybatis.xml 中的 <environments> 镖旗
     if (context != null) {
-      // 1. 用户没有指定environment时,使用mybatis.xml中配置的默认environment
+      // 1. 用户没有在SqlSessionFactoryBuilder中指定需要使用的environment时,默认使用mybatis.xml中配置的default的environment
       if (environment == null) {
         environment = context.getStringAttribute("default");
       }
@@ -334,8 +338,14 @@ public class XMLConfigBuilder extends BaseBuilder {
           // 3. 找到目标的environment -- 开始创建Configuration中的environment
 
           // 3.1 tx工厂 -- tx 获取连接/提交/回滚/超时时间
+          //    typeAliasRegistry.registerAlias("JDBC", JdbcTransactionFactory.class);
+          //    typeAliasRegistry.registerAlias("MANAGED", ManagedTransactionFactory.class);
           TransactionFactory txFactory = transactionManagerElement(child.evalNode("transactionManager"));
           // 3.2 数据源工厂 -- 数据源 url/password/username
+          // 数据源工厂支持以下几种:
+          //    typeAliasRegistry.registerAlias("JNDI", JndiDataSourceFactory.class);
+          //    typeAliasRegistry.registerAlias("POOLED", PooledDataSourceFactory.class);
+          //    typeAliasRegistry.registerAlias("UNPOOLED", UnpooledDataSourceFactory.class);
           DataSourceFactory dsFactory = dataSourceElement(child.evalNode("dataSource"));
           DataSource dataSource = dsFactory.getDataSource();
           // 3.3 构建 Environment -- DataSource\TransactionFactory
@@ -395,7 +405,11 @@ public class XMLConfigBuilder extends BaseBuilder {
     // 根据 mybatis.xml 中的 Configuration->environments->environment->dataSource 标签
 
     if (context != null) {
-      // 1. 获取type属性
+      // 1. 获取dataSource的type属性
+      // 数据源工厂支持以下几种:
+      //    typeAliasRegistry.registerAlias("JNDI", JndiDataSourceFactory.class);
+      //    typeAliasRegistry.registerAlias("POOLED", PooledDataSourceFactory.class);
+      //    typeAliasRegistry.registerAlias("UNPOOLED", UnpooledDataSourceFactory.class);
       String type = context.getStringAttribute("type");
       Properties props = context.getChildrenAsProperties();
       // 2. 解析为 DataSourceFactory

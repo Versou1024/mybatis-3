@@ -33,6 +33,7 @@ import java.util.Properties;
 public class SqlSessionFactoryBuilder {
 
   // 构建SqlSession实例
+  // 传递进来的Reader/InputStream都是针对Mybatis.xml
 
   public SqlSessionFactory build(Reader reader) {
     return build(reader, null, null);
@@ -115,6 +116,7 @@ public class SqlSessionFactoryBuilder {
   }
 
   public SqlSessionFactory build(Configuration config) {
+    // ❗️❗️❗️ 最终都是用的默认的 DefaultSqlSessionFactory
     return new DefaultSqlSessionFactory(config);
   }
 

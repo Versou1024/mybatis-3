@@ -80,6 +80,9 @@ public class MapWrapper extends BaseWrapper {
 
   @Override
   public Class<?> getSetterType(String name) {
+    // 从MapWrapper中获取可以set的类型
+
+    // 1. 老样子: 先检查是否有子元素 -- 有的话还需要先去递归查找一下
     PropertyTokenizer prop = new PropertyTokenizer(name);
     if (prop.hasNext()) {
       MetaObject metaValue = metaObject.metaObjectForProperty(prop.getIndexedName());
@@ -89,9 +92,12 @@ public class MapWrapper extends BaseWrapper {
         return metaValue.getSetterType(prop.getChildren());
       }
     } else {
+      // 2.1 当map中有对应的name时,直接获取其vuale的class
       if (map.get(name) != null) {
         return map.get(name).getClass();
-      } else {
+      }
+      // 2.2 否则就是Object大杀器
+      else {
         return Object.class;
       }
     }

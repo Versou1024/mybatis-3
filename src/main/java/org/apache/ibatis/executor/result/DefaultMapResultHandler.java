@@ -15,8 +15,6 @@
  */
 package org.apache.ibatis.executor.result;
 
-import java.util.Map;
-
 import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.reflection.ReflectorFactory;
 import org.apache.ibatis.reflection.factory.ObjectFactory;
@@ -24,10 +22,14 @@ import org.apache.ibatis.reflection.wrapper.ObjectWrapperFactory;
 import org.apache.ibatis.session.ResultContext;
 import org.apache.ibatis.session.ResultHandler;
 
+import java.util.Map;
+
 /**
  * @author Clinton Begin
  */
 public class DefaultMapResultHandler<K, V> implements ResultHandler<V> {
+  // 用来处理@MapKey注解
+  // @MapKey注解确定返回的Map结构的key -- 告诉Mybatis使用哪一个PO对象的哪一个属性作为Map的key
 
   private final Map<K, V> mappedResults;
   private final String mapKey;
@@ -46,7 +48,11 @@ public class DefaultMapResultHandler<K, V> implements ResultHandler<V> {
 
   @Override
   public void handleResult(ResultContext<? extends V> context) {
+    // 1. context中已经提前设置好value值
     final V value = context.getResultObject();
+    // 2. 从value值即java对象中检索指定mapKey的属性,然后获取出来
+    // 做一个键值对存入mappedResults
+    // 这就是Mapper接口返回的最终Map结构
     final MetaObject mo = MetaObject.forObject(value, objectFactory, objectWrapperFactory, reflectorFactory);
     // TODO is that assignment always true?
     final K key = (K) mo.getValue(mapKey);

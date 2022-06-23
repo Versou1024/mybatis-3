@@ -58,6 +58,7 @@ public class MapperRegistry {
     }
     try {
       // 2. 使用 MapperProxyFactory.newInstance()方法 创建 Mapper 对象
+      // 每个Mapper接口的代理对象的创建都是用新的代理对象 -- 内部使用的sqlSession
       return mapperProxyFactory.newInstance(sqlSession);
     } catch (Exception e) {
       throw new BindingException("Error getting mapper instance. Cause: " + e, e);

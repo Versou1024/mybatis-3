@@ -57,7 +57,7 @@ public class MetaObject {
     else if (object instanceof Map) {
       this.objectWrapper = new MapWrapper(this, (Map) object);
     }
-    // 无法至二级构造出阿里
+    //
     else if (object instanceof Collection) {
       this.objectWrapper = new CollectionWrapper(this, (Collection) object);
     }
@@ -127,7 +127,7 @@ public class MetaObject {
   // 核心:获取指定name的值
 
   public Object getValue(String name) {
-    // 比如 persons[1].hobbies 那么 prop.getName()就是persons + prop.getIndexedName()就是person[1]
+    // 比如 persons[1].hobbies 那么 prop.getName()就是 persons + prop.getIndexedName()就是person[1]
     // 第二次进来时: name就是persons[1]
     PropertyTokenizer prop = new PropertyTokenizer(name);
     // 1. 是否有子属性,以上面为例是有的
@@ -167,7 +167,7 @@ public class MetaObject {
   }
 
   public MetaObject metaObjectForProperty(String name) {
-    // 比如 persons[1].hobbies 那么 prop.getName()就是persons + prop.getIndexedName()就是person[1]
+    // 比如 persons[1].hobbies 那么 prop.getName() 就是persons + prop.getIndexedName()就是person[1]
     // 这里传递过来的就是 person[1] 旨在从当前MetaObject找出父对象 person[1] 然后为其构建对象 MetaObject返回
     // 继续递归getvalue()属性 -- 传递的name就是persons[1]
     Object value = getValue(name);

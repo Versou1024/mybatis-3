@@ -54,11 +54,13 @@ public class DefaultSqlSession implements SqlSession {
   private final Configuration configuration;
   // SqlSession 的核心方法都是交给 executor 执行的
   // executor 的核心方法其实都是交给 StatementHandler 处理的
+  // 包括SqlSession的缓存都是放在Executor中的
   private final Executor executor;
 
   private final boolean autoCommit;
   // 标记数据是否为脏数据
   // 一般在 insert/update/delete 都会设置为true
+  // 作用: 当DefaultSqlSession不强制commit和rollback,且非自动提交时,将根据是否有产生脏数据dirty做Transactional事务的commit和rollback
   private boolean dirty;
   private List<Cursor<?>> cursorList;
 
@@ -75,11 +77,14 @@ public class DefaultSqlSession implements SqlSession {
     this(configuration, executor, false);
   }
 
+  // selectOne
+
   @Override
   public <T> T selectOne(String statement) {
     return this.selectOne(statement, null);
   }
 
+  // ❗️❗️❗️
   @Override
   public <T> T selectOne(String statement, Object parameter) {
     // Popular vote was to return null on 0 results and throw exception on too many.
@@ -94,6 +99,8 @@ public class DefaultSqlSession implements SqlSession {
     }
   }
 
+  // selectMap
+
   @Override
   public <K, V> Map<K, V> selectMap(String statement, String mapKey) {
     return this.selectMap(statement, null, mapKey, RowBounds.DEFAULT);
@@ -104,18 +111,23 @@ public class DefaultSqlSession implements SqlSession {
     return this.selectMap(statement, parameter, mapKey, RowBounds.DEFAULT);
   }
 
+  // ❗️❗️❗️
   @Override
   public <K, V> Map<K, V> selectMap(String statement, Object parameter, String mapKey, RowBounds rowBounds) {
+    // 1. selectMap实际还是通过selectList完成查询动作
     final List<? extends V> list = selectList(statement, parameter, rowBounds);
-    final DefaultMapResultHandler<K, V> mapResultHandler = new DefaultMapResultHandler<>(mapKey,
-            configuration.getObjectFactory(), configuration.getObjectWrapperFactory(), configuration.getReflectorFactory());
+    // 2. 构建 DefaultMapResultHandler 进行处理即可
+    final DefaultMapResultHandler<K, V> mapResultHandler = new DefaultMapResultHandler<>(mapKey, configuration.getObjectFactory(), configuration.getObjectWrapperFactory(), configuration.getReflectorFactory());
     final DefaultResultContext<V> context = new DefaultResultContext<>();
     for (V o : list) {
       context.nextResultObject(o);
       mapResultHandler.handleResult(context);
     }
+    // 3. 返回最终的map接口
     return mapResultHandler.getMappedResults();
   }
+
+  // selectCursor -- 可以忽略
 
   @Override
   public <T> Cursor<T> selectCursor(String statement) {
@@ -141,6 +153,8 @@ public class DefaultSqlSession implements SqlSession {
     }
   }
 
+  // ❗️❗️❗️ selectList
+
   @Override
   public <E> List<E> selectList(String statement) {
     return this.selectList(statement, null);
@@ -164,6 +178,8 @@ public class DefaultSqlSession implements SqlSession {
     }
   }
 
+  // select  -- 执行: 当mapper接口的方法为select且返回值为void,并且其中有一个形参类型时ResultHandler的情况
+
   @Override
   public void select(String statement, Object parameter, ResultHandler handler) {
     select(statement, parameter, RowBounds.DEFAULT, handler);
@@ -186,6 +202,8 @@ public class DefaultSqlSession implements SqlSession {
     }
   }
 
+  // insert
+
   @Override
   public int insert(String statement) {
     return insert(statement, null);
@@ -202,6 +220,8 @@ public class DefaultSqlSession implements SqlSession {
     return update(statement, parameter);
   }
 
+  // update
+
   @Override
   public int update(String statement) {
     return update(statement, null);
@@ -216,8 +236,8 @@ public class DefaultSqlSession implements SqlSession {
       MappedStatement ms = configuration.getMappedStatement(statement);
       // 3. 调用执行器开始执行 -- 真实执行
       // 由于前面有一种特殊情况,那就是无@Param且为单元素时,parameter就是对应的对象
-      // 其余情况就是HashMap<String,Object>情况
-      // 通过wrapCollection(parameter) -- 都包装为
+      // 其余情况就是ParamMap<String,Object>情况
+      // 通过wrapCollection(parameter) -- 主要还是将无@Param且为单元素的List/Collection/Array都包装为StrictMap结构哦
       return executor.update(ms, wrapCollection(parameter));
     } catch (Exception e) {
       throw ExceptionFactory.wrapException("Error updating database.  Cause: " + e, e);
@@ -226,15 +246,21 @@ public class DefaultSqlSession implements SqlSession {
     }
   }
 
+  // delete
+
   @Override
   public int delete(String statement) {
+    // 删除 -- 最终是到update()上
     return update(statement, null);
   }
 
   @Override
   public int delete(String statement, Object parameter) {
+    // 删除 -- 最终是到update()上
     return update(statement, parameter);
   }
+
+  // commit
 
   @Override
   public void commit() {
@@ -243,6 +269,8 @@ public class DefaultSqlSession implements SqlSession {
 
   @Override
   public void commit(boolean force) {
+    // SqlSession的提交是委托 Executor -> Transactional 执行的
+    // 其次是确保Executor中局部缓存失效
     try {
       executor.commit(isCommitOrRollbackRequired(force));
       dirty = false;
@@ -253,6 +281,8 @@ public class DefaultSqlSession implements SqlSession {
     }
   }
 
+  // rollback
+
   @Override
   public void rollback() {
     rollback(false);
@@ -260,6 +290,7 @@ public class DefaultSqlSession implements SqlSession {
 
   @Override
   public void rollback(boolean force) {
+    // SqlSession的回滚是委托executor执行的
     try {
       executor.rollback(isCommitOrRollbackRequired(force));
       dirty = false;
@@ -338,6 +369,8 @@ public class DefaultSqlSession implements SqlSession {
     cursorList.add(cursor);
   }
 
+  // 形参force为true,就会强制在commit和rollback执行时强制被执行
+  // 形参force为false时,只要不是自动提交,并且在DML执行之后变为脏数据,也需要强制执行
   private boolean isCommitOrRollbackRequired(boolean force) {
     return (!autoCommit && dirty) || force;
   }

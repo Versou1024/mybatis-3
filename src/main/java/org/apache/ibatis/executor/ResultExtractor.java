@@ -15,12 +15,12 @@
  */
 package org.apache.ibatis.executor;
 
-import java.lang.reflect.Array;
-import java.util.List;
-
 import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.reflection.factory.ObjectFactory;
 import org.apache.ibatis.session.Configuration;
+
+import java.lang.reflect.Array;
+import java.util.List;
 
 /**
  * @author Andrew Gustafson
@@ -36,13 +36,18 @@ public class ResultExtractor {
 
   public Object extractObjectFromList(List<Object> list, Class<?> targetType) {
     Object value = null;
+    // 1. target就是list类型,直接返回
     if (targetType != null && targetType.isAssignableFrom(list.getClass())) {
       value = list;
-    } else if (targetType != null && objectFactory.isCollection(targetType)) {
+    }
+    // 2. target是其他的collection类型
+    else if (targetType != null && objectFactory.isCollection(targetType)) {
       value = objectFactory.create(targetType);
       MetaObject metaObject = configuration.newMetaObject(value);
       metaObject.addAll(list);
-    } else if (targetType != null && targetType.isArray()) {
+    }
+    // 3. target是数组类型
+    else if (targetType != null && targetType.isArray()) {
       Class<?> arrayComponentType = targetType.getComponentType();
       Object array = Array.newInstance(arrayComponentType, list.size());
       if (arrayComponentType.isPrimitive()) {
@@ -53,7 +58,9 @@ public class ResultExtractor {
       } else {
         value = list.toArray((Object[])array);
       }
-    } else {
+    }
+    // 4. target非数组非Collection非List,就是一个简单JavaBean,那么要求list中只有一个对象
+    else {
       if (list != null && list.size() > 1) {
         throw new ExecutorException("Statement returned more than one row, where no more than one was expected.");
       } else if (list != null && list.size() == 1) {

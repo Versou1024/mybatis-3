@@ -96,9 +96,12 @@ public class Configuration {
 
   // 全局配置 -- 一般是在 mybaits.xml 的 <setting> 标签中配置接口
 
+  // 全局配置是否使用安全的RowBounds -- 默认为true
+  // 即RowBounds的limit必须Integer.MAX_VALUE,offset必须大于0
   protected boolean safeRowBoundsEnabled;
   protected boolean safeResultHandlerEnabled = true;
   protected boolean mapUnderscoreToCamelCase;
+  // 是否积极的触发Lazy的嵌查询的加载 -- 默认为false
   protected boolean aggressiveLazyLoading;
   protected boolean multipleResultSetsEnabled = true;
   // 全局配置是否需要使用生成的key
@@ -125,6 +128,7 @@ public class Configuration {
   protected LocalCacheScope localCacheScope = LocalCacheScope.SESSION;
   // 全局配置: 当没有指定JdbcType时,用于如何确定默认的jdbcType
   protected JdbcType jdbcTypeForNull = JdbcType.OTHER;
+  // 延迟加载触发方法 -- 默认是 equals\clone\hashCode\toString
   protected Set<String> lazyLoadTriggerMethods = new HashSet<>(Arrays.asList("equals", "clone", "hashCode", "toString"));
   protected Integer defaultStatementTimeout;
   protected Integer defaultFetchSize;
@@ -136,6 +140,7 @@ public class Configuration {
   protected AutoMappingUnknownColumnBehavior autoMappingUnknownColumnBehavior = AutoMappingUnknownColumnBehavior.NONE;
 
   // 解析出 mybatis.xml 中 <properties> 标签的的 resource或url 属性
+  // 也可以在 SqlSessionFactoryBuilder 中指定传递的 Properties
   protected Properties variables = new Properties();
   // 用户可通过 <reflectorFactory> 标签设置自定义的reflectorFactory -- 提供根据class做实例化的能力
   // 默认是 DefaultReflectorFactory
@@ -171,7 +176,7 @@ public class Configuration {
   // LanguageDriver 注册表
   protected final LanguageDriverRegistry languageRegistry = new LanguageDriverRegistry();
 
-  // 存储 MappedStatement: 其中key为insert/update/delete/select的命名空间+id - 也可以是 selectKey标签的命名空间+!selectKey
+  // 存储 MappedStatement: 其中key为insert/update/delete/select的命名空间+ "." +id - 也可以是 selectKey标签的命名空间+!selectKey
   // MappedStatement 就是对应标签生成的MappedStatement
   protected final Map<String, MappedStatement> mappedStatements = new StrictMap<MappedStatement>("Mapped Statements collection")
       .conflictMessageProducer((savedValue, targetValue) ->

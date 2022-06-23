@@ -15,22 +15,17 @@
  */
 package org.apache.ibatis.datasource.unpooled;
 
+import org.apache.ibatis.io.Resources;
+
 import java.io.PrintWriter;
-import java.sql.Connection;
-import java.sql.Driver;
-import java.sql.DriverManager;
-import java.sql.DriverPropertyInfo;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
-
 import javax.sql.DataSource;
-
-import org.apache.ibatis.io.Resources;
 
 /**
  * @author Clinton Begin
@@ -41,6 +36,7 @@ public class UnpooledDataSource implements DataSource {
 
   // driverClassLoader 一般都是null的
   private ClassLoader driverClassLoader;
+  // 用于接受mybatis.xml中 <environments> -> <environment> -> <dataSource> -> 多个<property>标签中name属性有以"driver."开头构成的driverProperties
   private Properties driverProperties;
   // 从 DriverManager 中检查已注册的所有Driver
   private static Map<String, Driver> registeredDrivers = new ConcurrentHashMap<>();
@@ -229,7 +225,7 @@ public class UnpooledDataSource implements DataSource {
   private Connection doGetConnection(Properties properties) throws SQLException {
     // 1. 检查Driver是否存在,不存在就需要尝试加载并且注册到DriverManager中[不注册后需要使用DriverManager.getConnection()可能出现不支持的亲啊坤哥],加载不出来就报错
     initializeDriver();
-    // 2. 根据url和props获取Connection
+    // 2. 根据url和props获取Connection -- Properties至少包含user/password两个属性值
     Connection connection = DriverManager.getConnection(url, properties);
     // 3. 配置Connection
     configureConnection(connection);

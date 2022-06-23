@@ -58,11 +58,14 @@ public class ResultSetWrapper {
     final int columnCount = metaData.getColumnCount();
     // 1. 从1开始遍历ResultSet的每一列
     for (int i = 1; i <= columnCount; i++) {
-      // 2. 存入 columnNames\jdbcTypes\classNames
-      // 默认是 isUseColumnLabel 为true -- 可以使用别名作为列名处理
+      // 2.1 处理ResultSet的元数据信息
+
+      // 从结果集获取每列的别名或正式列名
       columnNames.add(configuration.isUseColumnLabel() ? metaData.getColumnLabel(i) : metaData.getColumnName(i));
-      // 检索指定列的 SQL 类型并转为 JdbcType -> 这个是准确的因为会从SQL执行结果中获取出来
+      // 从结果集中检索指定列的SQL类型并转为JdbcType -> 这个是准确的因为会从SQL执行结果中获取出来
       jdbcTypes.add(JdbcType.forCode(metaData.getColumnType(i)));
+      // 从结果集中检索每列的Java类型 -- 比如VARCHAR对应String类型/DATETIME对象LocalDateTime
+      // 不一定和最终返回的对象类型相同
       classNames.add(metaData.getColumnClassName(i));
     }
   }

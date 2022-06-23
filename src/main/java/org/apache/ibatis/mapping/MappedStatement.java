@@ -72,6 +72,8 @@ public final class MappedStatement {
       mappedStatement.sqlSource = sqlSource;
       mappedStatement.statementType = StatementType.PREPARED;
       mappedStatement.resultSetType = ResultSetType.DEFAULT;
+      // parameterMap每次都会被创建 -- 因此即使没有使用<parameterType>标签也会有对应的ParameterMap对象即 id = "defaultParameterMap"
+      // 如果有<parameterType>标签可通过Builder.parameterMap(ParameterMap parameterMap)重写
       mappedStatement.parameterMap = new ParameterMap.Builder(configuration, "defaultParameterMap", null, new ArrayList<>()).build();
       mappedStatement.resultMaps = new ArrayList<>();
       mappedStatement.sqlCommandType = sqlCommandType;

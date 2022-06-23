@@ -15,14 +15,13 @@
  */
 package org.apache.ibatis.datasource.unpooled;
 
-import java.util.Properties;
-
-import javax.sql.DataSource;
-
 import org.apache.ibatis.datasource.DataSourceException;
 import org.apache.ibatis.datasource.DataSourceFactory;
 import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.reflection.SystemMetaObject;
+
+import java.util.Properties;
+import javax.sql.DataSource;
 
 /**
  * @author Clinton Begin
@@ -45,28 +44,31 @@ public class UnpooledDataSourceFactory implements DataSourceFactory {
 
   @Override
   public void setProperties(Properties properties) {
+    // ❗️❗️❗️ -- driver/url/username/password等基本信息如何填充到DataSource中
+
     Properties driverProperties = new Properties();
-    // 利用元数据访问器metaDataSource将properties中的属性填充到dataSource中
+    // 1. 利用元数据访问器metaDataSource将<dataSource>标签下的多个子标签<property>构成的properties中的属性填充到即将生成的dataSource中
     MetaObject metaDataSource = SystemMetaObject.forObject(dataSource);
     for (Object key : properties.keySet()) {
       String propertyName = (String) key;
+      // 2. 以"driver."开头的,认为设置到驱动器的属性,而不是设置到DataSource
       if (propertyName.startsWith(DRIVER_PROPERTY_PREFIX)) {
         String value = properties.getProperty(propertyName);
         driverProperties.setProperty(propertyName.substring(DRIVER_PROPERTY_PREFIX_LENGTH), value);
       } else if (metaDataSource.hasSetter(propertyName)) {
-        // 根据UnpooledDataSource中是否有对应的propertyName的set方法
+        // 3.1 根据DataSource中是否有对应的propertyName的set方法
         // 有的话,就调用set方法
         String value = (String) properties.get(propertyName);
-        // 转换值
+        // 3.2 转换值
         Object convertedValue = convertValue(metaDataSource, propertyName, value);
-        // 向 metaDataSource 设置属性名和属性值
+        // 3.3 向 metaDataSource 设置属性名和属性值
         metaDataSource.setValue(propertyName, convertedValue);
       } else {
         throw new DataSourceException("Unknown DataSource property: " + propertyName);
       }
     }
     if (driverProperties.size() > 0) {
-      // 设置 driverProperties -- 99%的情况都是空的
+      // 4. 设置 driverProperties -- 99%的情况都是空的
       metaDataSource.setValue("driverProperties", driverProperties);
     }
   }

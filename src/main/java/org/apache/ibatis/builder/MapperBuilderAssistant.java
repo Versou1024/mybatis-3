@@ -319,7 +319,8 @@ public class MapperBuilderAssistant extends BaseBuilder {
         .useCache(valueOrDefault(useCache, isSelect))
         .cache(currentCache);
 
-    // 4. 构建 ParameterMap
+    // note: new MappedStatement.Builder(configuration, id, sqlSource, sqlCommandType) 中会默认创建一个ParameterMap对象使用
+    // 4. 当实际有使用<parameterMap>标签或者DML标签的parameterType属性 -- 就需哟啊构建新ParameterMap -- 替换前面默认的ParameterMap
     ParameterMap statementParameterMap = getStatementParameterMap(parameterMap, parameterType, id);
     if (statementParameterMap != null) {
       statementBuilder.parameterMap(statementParameterMap);
@@ -343,16 +344,20 @@ public class MapperBuilderAssistant extends BaseBuilder {
     // 1. parameterMapName适配命名空间后的id
     parameterMapName = applyCurrentNamespace(parameterMapName, true);
     ParameterMap parameterMap = null;
-    // 2.1 使用 parameterMap 属性
+
+    // note: <parameterMap>标签 与 parameterType属性 的使用只能二选一
+    // 两个同时存在时 -- parameterMapName 是有效的
+
+    // 2.1 使用 <parameterMap> 标签
     if (parameterMapName != null) {
       try {
-        // 2.1.1 直接从Configuration中获取
+        // 2.1.1 直接从Configuration中获取 -- 因为在解析DML标签之前已经解析过<paramMap>标签
         parameterMap = configuration.getParameterMap(parameterMapName);
       } catch (IllegalArgumentException e) {
         throw new IncompleteElementException("Could not find parameter map " + parameterMapName, e);
       }
     }
-    // 2.2 使用 parameterType 属性
+    // 2.2 DML标签中使用的 parameterType 属性
     else if (parameterTypeClass != null) {
       // 2.2.1 注意它的id是: 所属MDL标签的id + "-Inline"
       List<ParameterMapping> parameterMappings = new ArrayList<>();

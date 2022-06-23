@@ -55,9 +55,9 @@ public abstract class BaseExecutor implements Executor {
   protected Executor wrapper;
 
   protected ConcurrentLinkedQueue<DeferredLoad> deferredLoads;
-  // 本地永久缓存
+  // SqlSession的一级本地永久缓存
   protected PerpetualCache localCache;
-  // 本地输出形参缓存
+  // SqlSession的一级本地输出形参缓存
   protected PerpetualCache localOutputParameterCache;
   // 配置
   protected Configuration configuration;
@@ -67,6 +67,7 @@ public abstract class BaseExecutor implements Executor {
 
   protected BaseExecutor(Configuration configuration, Transaction transaction) {
     // 唯一构造器
+    // 至少需要传递: Configuration以及对应的事务transaction
     this.transaction = transaction;
     this.deferredLoads = new ConcurrentLinkedQueue<>();
     this.localCache = new PerpetualCache("LocalCache"); // 本地缓存
@@ -207,10 +208,14 @@ public abstract class BaseExecutor implements Executor {
     if (closed) {
       throw new ExecutorException("Executor was closed.");
     }
+    // 1. 创建DeferredLoad
+    // 传入 对象的MetaObject/传入对应的属性property名/传入CacheKey/传入本地缓存localCache/传入配置/传入目标属性的java类型
     DeferredLoad deferredLoad = new DeferredLoad(resultObject, property, key, localCache, configuration, targetType);
+    // 2. 可以load()就调用
     if (deferredLoad.canLoad()) {
       deferredLoad.load();
     } else {
+      // 3. 否则加入到 deferredLoads
       deferredLoads.add(new DeferredLoad(resultObject, property, key, localCache, configuration, targetType));
     }
   }
@@ -277,8 +282,8 @@ public abstract class BaseExecutor implements Executor {
     if (closed) {
       throw new ExecutorException("Cannot commit, transaction is already closed");
     }
-    clearLocalCache();
-    flushStatements();
+    clearLocalCache(); // 清空本地缓存
+    flushStatements(); // 刷新statement
     if (required) {
       transaction.commit();
     }
@@ -428,14 +433,16 @@ public abstract class BaseExecutor implements Executor {
     }
 
     public boolean canLoad() {
+      // 1. 本地缓存有指定的cacheKey,并且本地缓存的值不是占位符即EXECUTION_PLACEHOLDER
       return localCache.getObject(key) != null && localCache.getObject(key) != EXECUTION_PLACEHOLDER;
     }
 
     public void load() {
-      @SuppressWarnings("unchecked")
-      // we suppose we get back a List
+      // 1. 获取指定cacheKey的List<Object>
       List<Object> list = (List<Object>) localCache.getObject(key);
+      // 2. 提取指定的值
       Object value = resultExtractor.extractObjectFromList(list, targetType);
+      // 3. set到resultObject中去的置顶property属性名上
       resultObject.setValue(property, value);
     }
 

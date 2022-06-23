@@ -21,6 +21,8 @@ import org.apache.ibatis.executor.ErrorContext;
  * @author Clinton Begin
  */
 public class ExceptionFactory {
+  // 异常工厂
+  // 将case的异常和异常信息进行包装 -- 存入 ErrorContext 中
 
   private ExceptionFactory() {
     // Prevent Instantiation
