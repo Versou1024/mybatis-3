@@ -82,7 +82,7 @@ public class MapperAnnotationBuilder {
   }
 
   public MapperAnnotationBuilder(Configuration configuration, Class<?> type) {
-    // 资源名字改为 -- com/sdk/developer/UserMapper.java (best guess)
+    // 资源名字改为 -- com/sdk/developer/UserMapper.java (best guess) -> 表示当前处理的是 Mapper接口资源
     // 这个 resource 并不是的 configuration.addLoadedResource(resource)
     String resource = type.getName().replace('.', '/') + ".java (best guess)";
     this.assistant = new MapperBuilderAssistant(configuration, resource); // 注意: 助理类中的resource为 com/sdk/developer/UserMapper.java (best guess)
@@ -95,12 +95,13 @@ public class MapperAnnotationBuilder {
     // MapperRegistry.addMapper()
     // 用来解析 Mapper接口上的注解
 
-    // 1. resource名字为 type.toString() 的值
+    // 1. configuration中加载的mapper接口的resource名字为 type.toString() 的值 -> 表示Configuration已经解析过对应的Mapper接口的注解
+    // 而不是上面MapperBuilderAssistant中的resource哦
     String resource = type.toString();
     if (!configuration.isResourceLoaded(resource)) {
       // 2. 先去加载Mapper接口对应的XmlResource
       loadXmlResource();
-      // 3. 标注mapper接口的注解被解析 -- type.toString() 作为标志信息 -- 即Class com.sdk.developer.UserMapper.xml
+      // 3. 标注mapper接口的注解被解析 -- type.toString() 作为标志信息 -- 即Class com.sdk.developer.UserMapper
       configuration.addLoadedResource(resource);
       // 4. 设置当前命名空间
       assistant.setCurrentNamespace(type.getName());
@@ -117,6 +118,8 @@ public class MapperAnnotationBuilder {
             parseStatement(method);
           }
         } catch (IncompleteElementException e) {
+          // 8. 捕获不完整元素异常,并将其注入到Configuration.incompleteMethods中
+          // 并使用MethodResolver封装起来哦
           configuration.addIncompleteMethod(new MethodResolver(this, method));
         }
       }
@@ -146,25 +149,25 @@ public class MapperAnnotationBuilder {
 
     //  1. 通过 "namespace:" + type.getName() 去Configuration中检查是否已经被加载过相应的XML文件
     // 在XMLMapperBuilder中解析完后,会将Configuration中的loadedResources添加 "namespace:" + type.getName()
-    // 其中type.getName()就是mapper.xml中nameSpace
+    // 其中type.getName()就是mapper.xml中nameSpace - 也就是对应的mapper接口的type.getName() -> 防止重复解析哦
     if (!configuration.isResourceLoaded("namespace:" + type.getName())) {
-      // 2. 没有加载过的话 -- 转换为 xmlResource 比如 com/sdk/developer/UserMapper.xml
+      // 2. 没有加载过对应的Mapper.xml文件的话 -- 转换为 xmlResource 比如 com.sdk.developer.UserMapper 转换为 com/sdk/developer/UserMapper.xml
       String xmlResource = type.getName().replace('.', '/') + ".xml";
       // 3. 获取Resource的输入流: /com/sdk/developer/UserMapper.xml
       InputStream inputStream = type.getResourceAsStream("/" + xmlResource);
       if (inputStream == null) {
-        // 显而易见: 这要求mapper接口和mapper.xml必须在同一个package中
+        // 3.1显而易见: 这要求mapper接口和mapper.xml必须在同一个package中
         // 如果没有mapper.xml就不需要去解析啦
         // Search XML mapper that is not in the module but in the classpath.
         try {
-          // 4. 获取xml输入流
+          // 3.2. 获取xml输入流
           inputStream = Resources.getResourceAsStream(type.getClassLoader(), xmlResource);
         } catch (IOException e2) {
           // ignore, resource is not required
         }
       }
       if (inputStream != null) {
-        // 15. 使用 XMLMapperBuilder进行构建
+        // 3.3 使用 XMLMapperBuilder进行构建解析
         XMLMapperBuilder xmlParser = new XMLMapperBuilder(inputStream, assistant.getConfiguration(), xmlResource, configuration.getSqlFragments(), type.getName());
         xmlParser.parse();
       }
@@ -230,6 +233,7 @@ public class MapperAnnotationBuilder {
     ConstructorArgs args = method.getAnnotation(ConstructorArgs.class);
     Results results = method.getAnnotation(Results.class);
     TypeDiscriminator typeDiscriminator = method.getAnnotation(TypeDiscriminator.class);
+    // 2. 为指定的method生成resultMap的Name
     String resultMapId = generateResultMapName(method);
     applyResultMap(resultMapId, returnType, argsIf(args), resultsIf(results), typeDiscriminator);
     return resultMapId;
@@ -244,7 +248,7 @@ public class MapperAnnotationBuilder {
       return type.getName() + "." + results.id();
     }
     // 2.
-    // 没有使用 @Results 时
+    // 步骤1不满足时,使用下面的方式
     // type.getName() + "." + method.getName() + "-" + "形参名1" + "-" + " 形参名2" == 多个参数
     // type.getName() + "." + method.getName() + "-void" = 单个参数
     StringBuilder suffix = new StringBuilder();
@@ -260,7 +264,7 @@ public class MapperAnnotationBuilder {
 
   private void applyResultMap(String resultMapId, Class<?> returnType, Arg[] args, Result[] results, TypeDiscriminator discriminator) {
     List<ResultMapping> resultMappings = new ArrayList<>();
-     // 1. 将@ConstructorArgs中的Arg[]适配为ResultMapping加入到resultMappings
+    // 1. 将@ConstructorArgs中的Arg[]适配为ResultMapping加入到resultMappings
     applyConstructorArgs(args, returnType, resultMappings);
     // 2. 将@Results中的Result[]适配为ResultMapping加入到resultMappings
     applyResults(results, returnType, resultMappings);

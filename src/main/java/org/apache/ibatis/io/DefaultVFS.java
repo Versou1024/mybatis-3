@@ -15,13 +15,10 @@
  */
 package org.apache.ibatis.io;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
+import org.apache.ibatis.logging.Log;
+import org.apache.ibatis.logging.LogFactory;
+
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -30,9 +27,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
-
-import org.apache.ibatis.logging.Log;
-import org.apache.ibatis.logging.LogFactory;
 
 /**
  * A default implementation of {@link VFS} that works for most application servers.
@@ -56,22 +50,23 @@ public class DefaultVFS extends VFS {
     try {
       List<String> resources = new ArrayList<>();
 
-      // First, try to find the URL of a JAR file containing the requested resource. If a JAR
-      // file is found, then we'll list child resources by reading the JAR.
+      // 1. 首先，尝试查找包含所请求资源的 JAR 文件的 URL。
+      // 如果找到 JAR 文件，那么我们将通过读取 JAR 来列出子资源。
       URL jarUrl = findJarForResource(url);
       if (jarUrl != null) {
         is = jarUrl.openStream();
         if (log.isDebugEnabled()) {
           log.debug("Listing " + url);
         }
+        // 1.1 列出给定Jar文件中以指定path开头的条目的文件的Resource。
         resources = listResources(new JarInputStream(is), path);
       }
+      // 2. 没有找到包含锁请求资源的JAR文件的URL
       else {
         List<String> children = new ArrayList<>();
         try {
           if (isJar(url)) {
-            // Some versions of JBoss VFS might give a JAR stream even if the resource
-            // referenced by the URL isn't actually a JAR
+            // 2.1 某些版本的 JBoss VFS 可能会提供 JAR 流，即使 URL 引用的资源实际上不是 JAR
             is = url.openStream();
             try (JarInputStream jarInput = new JarInputStream(is)) {
               if (log.isDebugEnabled()) {

@@ -22,7 +22,11 @@ import java.lang.reflect.Constructor;
  * @author Eduardo Macarron
  */
 public final class LogFactory {
-  // 日志工厂
+  // 位于: org.apache.ibatis.logging
+
+  // 命名:
+  // Log Factory = 日志工厂
+  // 生成Log对象
 
   /**
    * Marker to be used by logging implementations that support markers.
@@ -33,7 +37,7 @@ public final class LogFactory {
   private static Constructor<? extends Log> logConstructor;
 
   static {
-    // 关注: 静态方法
+    // 关注: 静态方法 优先级从上到下执行
     tryImplementation(LogFactory::useSlf4jLogging);
     tryImplementation(LogFactory::useCommonsLogging);
     tryImplementation(LogFactory::useLog4J2Logging);

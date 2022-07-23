@@ -65,23 +65,36 @@ public class SelectKeyGenerator implements KeyGenerator {
   private void processGeneratedKeys(Executor executor, MappedStatement ms, Object parameter) {
     // 核心一:
     try {
+      // 1. 要求: 执行的mapper方法的parameter非空,且当前执行KeyGenerator的keyStatement非空,同时指定回填的属性KeyProperties非空
       if (parameter != null && keyStatement != null && keyStatement.getKeyProperties() != null) {
+        // 1.1 拿到KeyStatement执行完后,将数据回填的实体属性
         String[] keyProperties = keyStatement.getKeyProperties();
         final Configuration configuration = ms.getConfiguration();
         final MetaObject metaParam = configuration.newMetaObject(parameter);
+        // 1.2 要求: keyProperties 非空
         if (keyProperties != null) {
-          // Do not close keyExecutor.
-          // The transaction will be closed by parent executor.
+          // 1.3 拿到SimpleExecutor
           Executor keyExecutor = configuration.newExecutor(executor.getTransaction(), ExecutorType.SIMPLE);
+          // 1.4 执行keyStatement语句进行查询,note:参数就是parameter哦
           List<Object> values = keyExecutor.query(keyStatement, parameter, RowBounds.DEFAULT, Executor.NO_RESULT_HANDLER);
+          // 1.5.1 结果大小为0无法回填报出哦
           if (values.size() == 0) {
             throw new ExecutorException("SelectKey returned no data.");
-          } else if (values.size() > 1) {
+          }
+          // 1.5.2 结果大小超过1无法回填报出哦
+          else if (values.size() > 1) {
             throw new ExecutorException("SelectKey returned more than one value.");
-          } else {
+          }
+          // 1.5.3 要求执行只有一个
+          else {
+            // 1.5.3.1 为结果去构建一个MetaObject
             MetaObject metaResult = configuration.newMetaObject(values.get(0));
+            // 1.5.3.2 并且KeyPropertis应该只有一个
+            // ❗️❗️❗️❗️❗️❗️ [一般keyStatement都是去查找下一个使用的主键,然后回填到实体类的id上,然后才去执行mp方法,常用在mp方法是insert上]
             if (keyProperties.length == 1) {
               if (metaResult.hasGetter(keyProperties[0])) {
+                // 1.5.3.3 ❗️❗️❗️
+                // 向形参的metaParam中keyProperties[0]属性回填结果输出结果metaResult.getValue(keyProperties[0])的值哦
                 setValue(metaParam, keyProperties[0], metaResult.getValue(keyProperties[0]));
               } else {
                 // no getter for the property - maybe just a single value object

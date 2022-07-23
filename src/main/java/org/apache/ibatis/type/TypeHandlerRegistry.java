@@ -439,6 +439,8 @@ public final class TypeHandlerRegistry {
       map.put(jdbcType, handler);
     }
     // 2. 存储所有的TypeHandler
+    // 注意:没有使用@MappedTypes和@MappedJdbcType注解的TypeHandler最终只会注册到allTypeHandlersMap
+    // 不会被注册到typeHandlerMap中哦
     allTypeHandlersMap.put(handler.getClass(), handler);
   }
 
@@ -492,8 +494,9 @@ public final class TypeHandlerRegistry {
   @SuppressWarnings("unchecked")
   public <T> TypeHandler<T> getInstance(Class<?> javaTypeClass, Class<?> typeHandlerClass) {
     // 使用 typeHandlerClass 为 javaTypeClass 实例化一个出来
-    // 前提是: 必须保证typeHandler的有一个为Class形参的构造器
-    // 然后才可以为这个javaTypeclass创建一个对应的TypeHandlerClass
+
+    // 1. 当javaTypeClass不为空,且typeHandlerClass的有一个为Class形参的构造器
+    // 就可以使用 javaTypeClass作为构造器形参构造对应的JavaType
     if (javaTypeClass != null) {
       try {
         Constructor<?> c = typeHandlerClass.getConstructor(Class.class);
@@ -504,7 +507,8 @@ public final class TypeHandlerRegistry {
         throw new TypeException("Failed invoking constructor for handler " + typeHandlerClass, e);
       }
     }
-    // 当javaType为空时,使用默认的空参构造器实例化即可哦
+    // 2.当javaType为空或者,上面抛出NoSuchMethodException
+    // 使用默认的空参构造器实例化即可哦
     try {
       Constructor<?> c = typeHandlerClass.getConstructor();
       return (TypeHandler<T>) c.newInstance();
@@ -518,12 +522,12 @@ public final class TypeHandlerRegistry {
   public void register(String packageName) {
     // 扫描某一个package下的所有TypeHandler并注册进来
 
+    // 1. 找到packageName下所有的TypeHandler
     ResolverUtil<Class<?>> resolverUtil = new ResolverUtil<>();
     resolverUtil.find(new ResolverUtil.IsA(TypeHandler.class), packageName);
     Set<Class<? extends Class<?>>> handlerSet = resolverUtil.getClasses();
     for (Class<?> type : handlerSet) {
-      //Ignore inner classes and interfaces (including package-info.java) and abstract classes
-      // 注意:TypeHandler不能是匿名类\接口\抽象类
+      // 2. 注意:TypeHandler不能是匿名类\接口\抽象类
       if (!type.isAnonymousClass() && !type.isInterface() && !Modifier.isAbstract(type.getModifiers())) {
         register(type);
       }

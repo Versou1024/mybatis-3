@@ -29,7 +29,8 @@ import java.util.Map;
  * @author Clinton Begin
  * @author Eduardo Macarron
  */
-public class MapperProxy<T> implements InvocationHandler, Serializable {
+public class
+MapperProxy<T> implements InvocationHandler, Serializable {
   // Mapper 接口创建代理对象时需要指定的 InvocationHandler
   // 使用的就是简单的JDK代理,因为Mapper是接口可以通过JDK代理
   // 创建代理的方法: 指定classLoader\代理接口Mapper\拦截器就是这里的MapperProxy

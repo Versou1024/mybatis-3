@@ -100,9 +100,12 @@ public class Configuration {
   // 即RowBounds的limit必须Integer.MAX_VALUE,offset必须大于0
   protected boolean safeRowBoundsEnabled;
   protected boolean safeResultHandlerEnabled = true;
+  // 可在 <setting> 中进行设置该属性
+  // 将下划线映射到去掉后大写下一个单词首字母 -- 默认为false/
   protected boolean mapUnderscoreToCamelCase;
   // 是否积极的触发Lazy的嵌查询的加载 -- 默认为false
   protected boolean aggressiveLazyLoading;
+  // 是否可以使用多个结果集: 默认为true [可以忽略~~,基本都是使用单ResultSet结果集罢了]
   protected boolean multipleResultSetsEnabled = true;
   // 全局配置是否需要使用生成的key
   // 如此当<update><insert>标签中没有指定useGeneratedKey属性时,也会默认是true的值
@@ -111,50 +114,64 @@ public class Configuration {
   // keyColumn    属性用于指定当Statement执行完成后,需要返回的数据的数据列名称,如果有多个数据列的话,可以使用,进行分隔.
   protected boolean useGeneratedKeys;
   // 是否使用列的别名
-  //
   protected boolean useColumnLabel = true;
-  protected boolean cacheEnabled = true; // 默认使用缓存
-  // 在 Null 上调用 Setters
+  // 全局默认开启缓存 ->
+  protected boolean cacheEnabled = true;
+  // 是否在 Null 上调用 Setters
   protected boolean callSettersOnNulls;
   // 是否使用真实的形参名
   // 用在解析MapperMethod时没有指定@Param注解,是否需要使用真实的形参名哦
   protected boolean useActualParamName = true;
-  // 返回空行的实例
+  // 对于返回结果ResultSet为空行时,返回null还是
   protected boolean returnInstanceForEmptyRow;
 
+  // 日志前缀: 默认为null
   protected String logPrefix;
+  // 最终使用的日志器Log -> 打印日志信息
   protected Class<? extends Log> logImpl;
+  // 最终使用的vfs实现列 -> VFS:提供一种便捷访问服务器资源的即可欧
   protected Class<? extends VFS> vfsImpl;
   protected LocalCacheScope localCacheScope = LocalCacheScope.SESSION;
-  // 全局配置: 当没有指定JdbcType时,用于如何确定默认的jdbcType
+  // 全局配置: 当没有指定JdbcType时,用于如何确定默认的jdbcType [默认使用OTHER]
   protected JdbcType jdbcTypeForNull = JdbcType.OTHER;
-  // 延迟加载触发方法 -- 默认是 equals\clone\hashCode\toString
+// 延迟加载触发方法 -- 默认是 equals\clone\hashCode\toString [忽略~~]
   protected Set<String> lazyLoadTriggerMethods = new HashSet<>(Arrays.asList("equals", "clone", "hashCode", "toString"));
+  // 默认的Statement的超时
   protected Integer defaultStatementTimeout;
+  // 批量执行时的抓取size
   protected Integer defaultFetchSize;
+  // ResultSetType: 控制jdbc中ResultSet对象的行为,他的取值对应着ResultSetType枚举
+  // FORWARD_ONLY / SCROLL_INSENSITIVE / SCROLL_SENSITIVE
   protected ResultSetType defaultResultSetType;
   // 执行器类型 -- 默认是Simple类型的
   protected ExecutorType defaultExecutorType = ExecutorType.SIMPLE;
+  // 自动映射行为: NONE-不自动映射,PARTIAL-只会自动映射结果，其中没有定义嵌套的结果映射,FULL-将自动映射任何复杂性的结果映射（包含嵌套或其他）。
   // 默认的AutoMapping的行为是Partial
   protected AutoMappingBehavior autoMappingBehavior = AutoMappingBehavior.PARTIAL;
+  // 当查询结果有个未知列无法自动映射到ResultMap或ResultType时如何处理
+  // NONE:啥也不做   WARNING发出警告   FAILING报出异常
   protected AutoMappingUnknownColumnBehavior autoMappingUnknownColumnBehavior = AutoMappingUnknownColumnBehavior.NONE;
 
   // 解析出 mybatis.xml 中 <properties> 标签的的 resource或url 属性
   // 也可以在 SqlSessionFactoryBuilder 中指定传递的 Properties
+  // 是Configuration的全局变量
   protected Properties variables = new Properties();
-  // 用户可通过 <reflectorFactory> 标签设置自定义的reflectorFactory -- 提供根据class做实例化的能力
+  // 用户可通过 <reflectorFactory> 标签设置自定义的reflectorFactory -- 提供给定类的Reflector -> Reflector持有class的相关信息 [可读的属性名/可写的属性名/set方法/get方法/set的形参类型/get的返回类型/默认的构造器]
   // 默认是 DefaultReflectorFactory
   protected ReflectorFactory reflectorFactory = new DefaultReflectorFactory();
   // 用户可通过 <objectFactory> 标签设置自定义的ObjectFactory -- 提供根据class做实例化的能力
-  // 默认是 DefaultObjectFactory
+  // 默认是 DefaultObjectFactory -> 用来创建指定Type的对象 -- 提供实例化能力[通过反射实现的]
   protected ObjectFactory objectFactory = new DefaultObjectFactory();
   // 用户可通过 <objectWrapperFactory> 标签设置自定义的ObjectWrapperFactory -- 生成ObjectWrapper,提供对目标对象的访问器的访问能力
   // 默认是 ObjectWrapperFactory
   protected ObjectWrapperFactory objectWrapperFactory = new DefaultObjectWrapperFactory();
-
+  // 全局默认的是否懒加载为false
   protected boolean lazyLoadingEnabled = false;
-  protected ProxyFactory proxyFactory = new JavassistProxyFactory(); // #224 Using internal Javassist instead of OGNL
 
+  // 代理工厂
+  protected ProxyFactory proxyFactory = new JavassistProxyFactory();
+
+  // DataBaseIdProvider#getDatabaseId(DataSource) 生成id
   protected String databaseId;
   /**
    * Configuration factory class.
@@ -205,6 +222,7 @@ public class Configuration {
   protected final Collection<CacheRefResolver> incompleteCacheRefs = new LinkedList<>();
   // 存放未完成的ResultMapResolver -- 解析器解析到一半发现ResultMap的extend的父ResultMap还没加载,就暂时存放在这里,后面再去处理吧
   protected final Collection<ResultMapResolver> incompleteResultMaps = new LinkedList<>();
+  // 存放未完成注解分析的method -- 标记MapperAnnotationBuilder#parser(..)解析过程中抛出IncompleteElementException异常的Method
   protected final Collection<MethodResolver> incompleteMethods = new LinkedList<>();
 
   /*
@@ -850,6 +868,8 @@ public class Configuration {
   }
 
   public <T> void addMapper(Class<T> type) {
+    // 结合: mybatis-spring来看,在MapperFactoryBean.checkDaoConfig()中都是通过 configuration.addMapper(this.mapperInterface);
+    // 来讲Mapper接口注册进来 -- 并在这个过程中去解析mapper接口的注解和xml ->
     mapperRegistry.addMapper(type);
   }
 
@@ -876,12 +896,14 @@ public class Configuration {
     cacheRefMap.put(namespace, referencedNamespace);
   }
 
-  /*
-   * Parses all the unprocessed statement nodes in the cache. It is recommended
-   * to call this method once all the mappers are added as it provides fail-fast
-   * statement validation.
-   */
   protected void buildAllStatements() {
+    // ❗️❗️❗️
+    // 作用:
+    // 解析缓存中所有未处理的statement节点, 建议在添加所有映射器后调用此方法，因为它提供了快速失败的语句验证
+
+    // 当前方法的调用地方:
+    // getMappedStatement(..) getMappedStatements(..) getMappedStatementNames(..) hasStatement(..)
+    // 原因 -> 确保这些方法在调用之前,能够获取到项目所有的MappedStatement -> [因此需要将incomplete的CacheRefs\statements\methods等等都给完成调]
     parsePendingResultMaps();
     if (!incompleteCacheRefs.isEmpty()) {
       synchronized (incompleteCacheRefs) {

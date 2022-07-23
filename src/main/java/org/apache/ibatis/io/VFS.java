@@ -15,6 +15,9 @@
  */
 package org.apache.ibatis.io;
 
+import org.apache.ibatis.logging.Log;
+import org.apache.ibatis.logging.LogFactory;
+
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -24,40 +27,44 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.ibatis.logging.Log;
-import org.apache.ibatis.logging.LogFactory;
-
 /**
  * Provides a very simple API for accessing resources within an application server.
  *
  * @author Ben Gunter
  */
 public abstract class VFS {
+  // 位于:  org.apache.ibatis.io
+
+  // 作用:
+  // 提供一种非常简单的API来访问一个应用服务的资源
   private static final Log log = LogFactory.getLog(VFS.class);
 
-  /** The built-in implementations. */
+  // 两个内置实现
   public static final Class<?>[] IMPLEMENTATIONS = { JBoss6VFS.class, DefaultVFS.class };
 
-  /** The list to which implementations are added by {@link #addImplClass(Class)}. */
+  // 最终使用的实现类
   public static final List<Class<? extends VFS>> USER_IMPLEMENTATIONS = new ArrayList<>();
 
   /** Singleton instance holder. */
   private static class VFSHolder {
+    // 单例Bean的Holder
     static final VFS INSTANCE = createVFS();
 
     @SuppressWarnings("unchecked")
     static VFS createVFS() {
-      // Try the user implementations first, then the built-ins
+      // 1. 先尝试用户实现，然后是内置
       List<Class<? extends VFS>> impls = new ArrayList<>();
-      impls.addAll(USER_IMPLEMENTATIONS);
-      impls.addAll(Arrays.asList((Class<? extends VFS>[]) IMPLEMENTATIONS));
+      impls.addAll(USER_IMPLEMENTATIONS); // 用户的VFS
+      impls.addAll(Arrays.asList((Class<? extends VFS>[]) IMPLEMENTATIONS)); // 内建的VFS
 
-      // Try each implementation class until a valid one is found
+      // 2. 尝试每个实现类，直到找到一个有效的类
       VFS vfs = null;
-      for (int i = 0; vfs == null || !vfs.isValid(); i++) {
+      for (int i = 0; vfs == null || !vfs.isValid(); i++) { // 直到: vfs非空 并且 vfs有效的
         Class<? extends VFS> impl = impls.get(i);
         try {
+          // 2.1 创建vfs
           vfs = impl.newInstance();
+          // 2.2 vfs为空 || vfs非空,但vfs也失效 -> 日志输出: 表示当前VFS无效
           if (vfs == null || !vfs.isValid()) {
             if (log.isDebugEnabled()) {
               log.debug("VFS implementation " + impl.getName() +
@@ -74,6 +81,7 @@ public abstract class VFS {
         log.debug("Using VFS adapter " + vfs.getClass().getName());
       }
 
+      // 返回vfs
       return vfs;
     }
   }
@@ -83,6 +91,7 @@ public abstract class VFS {
    * current environment, then this method returns null.
    */
   public static VFS getInstance() {
+    // 获取VFS实例
     return VFSHolder.INSTANCE;
   }
 
@@ -93,6 +102,7 @@ public abstract class VFS {
    * @param clazz The {@link VFS} implementation class to add.
    */
   public static void addImplClass(Class<? extends VFS> clazz) {
+    // 添加: 实现类 ->
     if (clazz != null) {
       USER_IMPLEMENTATIONS.add(clazz);
     }
@@ -119,6 +129,7 @@ public abstract class VFS {
    * @param parameterTypes The types of the parameters accepted by the method.
    */
   protected static Method getMethod(Class<?> clazz, String methodName, Class<?>... parameterTypes) {
+    // 获取指定method
     if (clazz == null) {
       return null;
     }
@@ -144,8 +155,8 @@ public abstract class VFS {
    * @throws RuntimeException If anything else goes wrong
    */
   @SuppressWarnings("unchecked")
-  protected static <T> T invoke(Method method, Object object, Object... parameters)
-      throws IOException, RuntimeException {
+  protected static <T> T invoke(Method method, Object object, Object... parameters) throws IOException, RuntimeException {
+    // 引用目标对象的方法
     try {
       return (T) method.invoke(object, parameters);
     } catch (IllegalArgumentException | IllegalAccessException e) {
@@ -173,6 +184,7 @@ public abstract class VFS {
 
   /** Return true if the {@link VFS} implementation is valid for the current environment. */
   public abstract boolean isValid();
+  // 如果VFS实现对当前环境有效，则返回 true
 
   /**
    * Recursively list the full resource path of all the resources that are children of the
@@ -195,6 +207,8 @@ public abstract class VFS {
    * @throws IOException If I/O errors occur
    */
   public List<String> list(String path) throws IOException {
+    // 递归列出作为在指定路径中找到的所有资源的子级的所有资源的完整资源路径
+
     List<String> names = new ArrayList<>();
     for (URL url : getResources(path)) {
       names.addAll(list(url, path));

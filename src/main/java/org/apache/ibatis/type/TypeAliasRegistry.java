@@ -29,6 +29,13 @@ import java.util.*;
 public class TypeAliasRegistry {
   // 类型别名注册表
 
+  // 场景:
+  // 别名的使用,比如在mapper.xml中insert标签中resultType为"com.sdk.developer.User"
+  // 如果为 User.class 注册别名 -> 那么就可以在insert总共resultType为"user" [还有其他场景,也类似]
+
+  // 别名:
+  // 别名可以是: @Alias的value值 > @Alias不存在时的class.getSimpleName()
+
   // 即通过名字找到对应的Class
   private final Map<String, Class<?>> typeAliases = new HashMap<>();
 
@@ -121,16 +128,17 @@ public class TypeAliasRegistry {
   }
 
   public void registerAliases(String packageName) {
+    // 注册别名 -> 为某个package下的所有class注册别名
     registerAliases(packageName, Object.class);
   }
 
   public void registerAliases(String packageName, Class<?> superType) {
+    // 1. 找到package下的所有class
     ResolverUtil<Class<?>> resolverUtil = new ResolverUtil<>();
     resolverUtil.find(new ResolverUtil.IsA(superType), packageName);
     Set<Class<? extends Class<?>>> typeSet = resolverUtil.getClasses();
+    // 2. 忽略内部类和接口（包括 package-info.java）,为其注册别名
     for (Class<?> type : typeSet) {
-      // Ignore inner classes and interfaces (including package-info.java)
-      // Skip also inner classes. See issue #6
       if (!type.isAnonymousClass() && !type.isInterface() && !type.isMemberClass()) {
         registerAlias(type);
       }
@@ -138,8 +146,7 @@ public class TypeAliasRegistry {
   }
 
   public void registerAlias(Class<?> type) {
-    // 1. 当没有别名时,直接使用type的simpleName作为别名使用
-    // 2. 获取检查类型上是否有@Alias别名注解的值
+    // 当没有使用@Alias注解的别名时,直接使用type.getSimpleName作为别名使用
 
     String alias = type.getSimpleName();
     Alias aliasAnnotation = type.getAnnotation(Alias.class);
@@ -151,11 +158,12 @@ public class TypeAliasRegistry {
 
   public void registerAlias(String alias, Class<?> value) {
     // 核心二: 注册指定别名alias对应的class值
+    // 别名是可以: @Alias的value值,也可以是@Alias不存在时的class.getSimpeName()
 
     if (alias == null) {
       throw new TypeException("The parameter alias cannot be null");
     }
-    // issue #748
+    // 0. 别名需要转换为小写的
     String key = alias.toLowerCase(Locale.ENGLISH);
     // 1. 不允许覆盖,否则报错
     if (typeAliases.containsKey(key) && typeAliases.get(key) != null && !typeAliases.get(key).equals(value)) {

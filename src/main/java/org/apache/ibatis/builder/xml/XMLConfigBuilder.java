@@ -194,9 +194,12 @@ public class XMLConfigBuilder extends BaseBuilder {
           try {
             Class<?> clazz = Resources.classForName(type);
             if (alias == null) {
-              // 2.1 未指定别名时,可以使用@Alias在类上标注别名,或者使用clazz的getSimpleName()
+              // 2.1
+              // 这里乜有传入别名
+              // 当类上有使用@Alias在类上标注别名,没有使用@Alias时使用clazz的getSimpleName()作为别名
               typeAliasRegistry.registerAlias(clazz);
             } else {
+              // 2.2 直接指定clazz的别名
               typeAliasRegistry.registerAlias(alias, clazz);
             }
           } catch (ClassNotFoundException e) {
@@ -422,6 +425,8 @@ public class XMLConfigBuilder extends BaseBuilder {
   }
 
   private void typeHandlerElement(XNode parent) {
+    // 解析 <typeHandler> 标签
+
     if (parent != null) {
       for (XNode child : parent.getChildren()) {
         if ("package".equals(child.getName())) {

@@ -35,7 +35,7 @@ public enum AutoMappingUnknownColumnBehavior {
   // 而 SysConfig 对象中有
   // 1. 只有 id 和 name 属性也会报错
   // 2. 三个属性都有,但没有对应的set方法
-  // 3. 三个属性都有,且都有对应的set方法,当时band属性为Band对象 -- 无法在TypeHandlerRegistry找到对应的TypeHandler也会触发报错
+  // 3. 三个属性都有,且都有对应的set方法,但是band属性为Band对象 -- 无法在TypeHandlerRegistry找到对应的TypeHandler也会触发报错
   // 注意: 没有空构造器的时候还没轮到AutoMappingUnknownColumnBehavior.doAction()就会触发异常
 
   // 实际上
@@ -46,6 +46,9 @@ public enum AutoMappingUnknownColumnBehavior {
   // select id,name,age,band
   // from t_sys_config
   // </select>
+
+  // 枚举常量:
+  //  NONE:啥也不做   WARNING发出警告   FAILING报出异常
 
   /**
    * Do nothing (Default).

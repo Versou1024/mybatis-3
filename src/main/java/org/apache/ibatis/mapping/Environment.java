@@ -26,7 +26,7 @@ public final class Environment {
   // 最重要的是 -- 持有当前环境的数据库连接信息即DataSource
 
   private final String id; // 环境id,一般可以是dev/qa/pre/prd等环境
-  private final TransactionFactory transactionFactory;
+  private final TransactionFactory transactionFactory; // 生成Transaction
   private final DataSource dataSource; // 对应环境的连接库信息
 
   public Environment(String id, TransactionFactory transactionFactory, DataSource dataSource) {

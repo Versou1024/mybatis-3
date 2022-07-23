@@ -21,6 +21,11 @@ import java.lang.reflect.Method;
  * @author Eduardo Macarron
  */
 public class MethodResolver {
+
+  // 作用:
+  // 在MapperAnnotationBuilder#parser(..)解析过程中抛出IncompleteElementException异常时
+  // 包装解析的方法method,用来做解析的annotationBuilder
+
   private final MapperAnnotationBuilder annotationBuilder;
   private final Method method;
 
